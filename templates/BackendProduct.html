@@ -1,0 +1,34 @@
+<li class="stock">
+    <a class="stock-button" href="javascript:void(0);">Акции<span class="hint"></span>
+        <span class="s-product-edit-tab-status"></span></a>
+</li>
+<script>
+
+$(document).ready(function(){
+    
+    
+    $.History.bind(function(e,d) {
+                    alert('dsds');
+                    return false;
+                });
+                
+                
+                /*
+    
+    $('.stock-button').click(function(){
+        var url = '?plugin=stock';
+        $.get(url, function (result) {
+                $("#s-product-edit-forms").removeClass('bordered-left').html(result);
+                $('html, body').animate({
+                    scrollTop: 0
+                }, 200);
+             
+                
+                window.location.hash = '#/product/34/edit/stock/';
+                //window.location.reload(true);
+            });
+    });*/
+});
+
+
+</script>
