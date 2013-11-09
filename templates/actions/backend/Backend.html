@@ -1,0 +1,37 @@
+<script type="text/javascript" src="{$wa_app_static_url}plugins/stock/js/stock.js"></script>
+
+<div class="field">
+    <div class="name">Название акции</div>
+    <div class="value"><input type="text" name="shop_stock[name]" value="" class="long bold"></div>
+</div>
+
+<div class="field">
+    <div class="name">Описание</div>
+    <div class="value">
+        <textarea name="shop_stock[description]"></textarea>
+    </div>
+</div>
+
+<div class="field">
+    <div class="name">Дата начала акции</div>
+    <div class="value">
+        <input type="text" name="shop_stock[date_begin]" value="">
+
+    </div>
+</div>
+
+<div class="field">
+    <div class="name">Дата завершения акции</div>
+    <div class="value">
+        <input type="text" name="shop_stock[date_end]" value="">
+
+    </div>
+</div>
+
+<script type="text/javascript">
+    $.product_stock.init({
+        container: '.s-product-form.services',
+        counter: '#s-product-edit-menu li.services span.hint',
+        product_id: {$product.id},
+    });
+</script>
