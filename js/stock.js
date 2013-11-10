@@ -53,7 +53,7 @@
 
             this.service_id = parseInt(this.options.service_id, 10) || 0;
             this.product_id = parseInt(this.options.product_id, 10) || 0;
-            this.form = this.product_id ? this.container.find('form') : $('#s-services-save');
+            this.form = $('#s-product-save');
 
             if (this.product_id) {
 
@@ -89,24 +89,15 @@
         save: function() {
 
             var form = $.product_stock.form;
+            var that = this;
             $.product.refresh('submit');
-
+            
+            var url = '?plugin=stock&action=save';
             return $.shop.jsonPost(
-                form.attr('action'),
+                url,
                 form.serialize(),
                 function(r) {
-                    var that = $.product_stock;
-                    var sidebar = that.container.find('.s-inner-sidebar');
-                    var li = sidebar.find('li[data-service-id='+that.service_id+']');
-                    var status = parseInt(r.data.status, 10);
-                    if (!status && !li.hasClass('gray')) {
-                        li.addClass('gray');
-                    } else if (status && li.hasClass('gray')) {
-                        li.removeClass('gray');
-                    }
-                    that.options.count = r.data.count;
-                    that.counter.text(r.data.count);
-
+                    
                     $.product.refresh();
                     $('#s-product-save-button').removeClass('yellow green').addClass('green');
 

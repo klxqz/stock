@@ -11,6 +11,11 @@ class shopStockPluginBackendAction extends waViewAction {
             throw new waException(_w("Unknown product"));
         }
         
+        $stock_model = new shopStockPluginModel();
+        $stock = $stock_model->getByField('product_id',$id);
+
+        
+        $this->view->assign('stock', $stock);
         $this->view->assign('product', $product);
     }
 
