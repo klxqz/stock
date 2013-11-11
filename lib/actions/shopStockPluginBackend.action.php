@@ -14,9 +14,11 @@ class shopStockPluginBackendAction extends waViewAction {
         $stock_model = new shopStockPluginModel();
         $stock = $stock_model->getByField('product_id',$id);
 
+        $def_currency = wa('shop')->getConfig()->getCurrency(true);
         
         $this->view->assign('stock', $stock);
         $this->view->assign('product', $product);
+        $this->view->assign('def_currency', $def_currency);
     }
 
 }

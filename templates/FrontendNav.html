@@ -1,0 +1,42 @@
+{literal}
+<style type="text/css">
+    .stockproducts ul{padding: 0px;}
+    .stockproducts_title{text-align: center;font-weight: bold;margin: 10px 0px;}
+    .stockproducts ul li{list-style: none;margin-bottom: 20px;}
+    .stockproducts_img{text-align: center;}
+    .stockproducts_name{text-align: center;}
+    .product-price{text-align: center;}
+    .stockproducts_link{text-align: center;}
+    .stock_title{font-weight: bold; color:#ff0000; text-align: center}
+</style>
+{/literal}
+{if $stock_products}
+<div class="stockproducts">
+    <div class="stockproducts_title">Акции</div>
+    <ul>
+        {foreach from=$stock_products item=product}
+        <li>
+            <div class="stockproducts_img">
+                <a href="{$wa->shop->productUrl($product)}">
+                    {$wa->shop->productImgHtml($product, '100x100', ['itemprop' => 'image', 'alt' => $product.name])}  
+                </a>
+            </div>
+            <div class="stockproducts_name">
+                <a href="{$product.frontend_url}">
+                    <span itemprop="name">{$product.name|truncate:60}</span>
+                </a>
+            </div>
+            <div class="product-price">
+                <span class="price nowrap" itemprop="price">{shop_currency($product.price)}</span>
+            </div>
+            <div class="stock_title">
+                {$product.stock.name}
+            </div>
+        </li>
+        {/foreach}
+    </ul>
+</div>
+<div class="stockproducts_link">
+    <a  href="{$wa->getUrl('shop/frontend/stock')}">Все товары</a>
+</div>
+{/if}

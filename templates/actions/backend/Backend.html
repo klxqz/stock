@@ -8,7 +8,7 @@
 
 <script>
     $(function() {
-        $(".datetime").datepicker({
+        $(".date").datepicker({
             dateFormat: 'yy-mm-dd',
         });
     });
@@ -33,7 +33,7 @@
 <div class="field">
     <div class="name">Дата начала акции</div>
     <div class="value">
-        <input class="datetime" type="text" name="shop_stock[date_begin]" value="{$stock.date_begin}">
+        <input class="date" type="text" name="shop_stock[date_begin]" value="{$stock.date_begin}">
 
     </div>
 </div>
@@ -41,10 +41,20 @@
 <div class="field">
     <div class="name">Дата завершения акции</div>
     <div class="value">
-        <input class="datetime" type="text" name="shop_stock[date_end]" value="{$stock.date_end}">
+        <input class="date" type="text" name="shop_stock[date_end]" value="{$stock.date_end}">
 
     </div>
 </div>
+
+<div class="field">
+    <div class="name">Количество товаров</div>
+    <div class="value">
+        <input class="short numerical" type="text" name="shop_stock[count]" placeholder="0" value="{$stock.count}">
+        <div class="hint">Количество аукционного товара, которое должен положить в корзину покупатель для активации акции</div>
+    </div>
+</div>
+
+
 
 <div class="field">
     <div class="name">Тип акции</div>
@@ -56,31 +66,40 @@
     </div>
 </div>
 
-<div class="field">
-    <div class="name">Тип скидки</div>
-    <div class="value">
-        <input type="radio" checked="checked" name="shop_stock[discount_type]" value /> - процентная скидка
-        <input type="radio" name="shop_stock[discount_type]" value /> - новая цена
+<div class="field-group stock_type" id="type_discount">
+    <div class="field">
+        <div class="name">Тип скидки</div>
+        <div class="value">
+            <input type="radio" {if $stock.discount_type=='percent_discount'}checked="checked"{/if} name="shop_stock[discount_type]" value="percent_discount" /> - процентная скидка
+            <input type="radio" {if $stock.discount_type=='new_price'}checked="checked"{/if} name="shop_stock[discount_type]" value="new_price" /> - новая цена
+        </div>
+    </div>
+
+    <div id="option_percent_discount" class="field discount_type_option">
+        <div class="name">Процентная скидка</div>
+        <div class="value">
+            <input class="short bold numerical" type="text" name="shop_stock[percent_discount]" placeholder="0" value="{$stock.percent_discount}"><span>%</span>
+        </div>
+    </div>
+
+    <div id="option_new_price" class="field discount_type_option">
+        <div class="name">Новая цена</div>
+        <div class="value">
+            <input class="short bold numerical" type="text" name="shop_stock[new_price]" placeholder="0" value="{(float)$stock.new_price}"><span>{$def_currency}</span>
+        </div>
     </div>
 </div>
 
-<div class="field">
-    <div class="name">Процентная скидка</div>
+<div  class="field stock_type" id="type_gift">
+    <div class="name">Артикул подарочного товара</div>
     <div class="value">
-        <input class="datetime" type="text" name="shop_stock[percent_discount]" value="">
-    </div>
-</div>
-
-<div class="field">
-    <div class="name">Процентная скидка</div>
-    <div class="value">
-        <input class="datetime" type="text" name="shop_stock[new_price]" value="">
+        <input class="short" placeholder="Артикул" type="text" name="shop_stock[sku_gift]" value="{$stock.sku_gift}">
     </div>
 </div>
 
 <script type="text/javascript">
     $.product_stock.init({
-        container: '.s-product-form.services',
+        container: '.s-product-form.stock',
         counter: '#s-product-edit-menu li.services span.hint',
         product_id: {$product.id},
     });

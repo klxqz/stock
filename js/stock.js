@@ -82,7 +82,33 @@
                 that.counter.text(that.options.count);
 
             }
-
+            this.discountTypeInit();
+            this.typeInit();
+                
+        },
+        
+        discountTypeInit: function() {
+            var val = $('input[name="shop_stock[discount_type]"]').val();
+            $('.discount_type_option').hide();
+            $('#option_' + val).show();
+            
+            $('input[name="shop_stock[discount_type]"]').change(function(){
+                var val = $(this).val();
+                $('.discount_type_option').hide();
+                $('#option_' + val).show();
+            });
+        },
+        
+        typeInit: function() {
+            var val = $('select[name="shop_stock[type]"]').val();
+            $('.stock_type').hide();
+            $('#type_' + val).show();
+            
+            $('select[name="shop_stock[type]"]').change(function(){
+                var val = $(this).val();
+                $('.stock_type').hide();
+                $('#type_' + val).show();
+            });
         },
 
 
