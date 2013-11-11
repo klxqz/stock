@@ -15,7 +15,7 @@ return array(
         'sku_gift' => array('varchar', 255, 'null' => 0, 'default' => ''),
         ':keys' => array(
             'PRIMARY' => array('id'),
-            'product_id' => 'contact_id',
+            'product_id' => 'product_id',
             'date_begin' => 'date_begin',
             'date_end' => 'date_end',
         ),

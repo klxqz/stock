@@ -10,7 +10,8 @@ class shopStockPluginBackendSaveController extends waJsonController
         if($stock_post['id']) {
             $stock_model->updateById($stock_post['id'],$stock_post);
         } else {
-            $stock_model->insert($stock_post);
+            $id = $stock_model->insert($stock_post);
+            $this->response['id'] = $id;
         }
     }
     

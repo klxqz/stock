@@ -7,6 +7,7 @@ return array(
     'version'=>'1.0.0',
     'img'=>'img/stock.png',
     'frontend'    => true,
+    'shop_settings' => true,
     'handlers' => array(
         'backend_product' => 'backendProduct',
         'frontend_product' => 'frontendProduct',

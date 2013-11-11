@@ -123,7 +123,9 @@
                 url,
                 form.serialize(),
                 function(r) {
-                    
+                    if(r.data.id) {
+                        $('input[name="shop_stock[id]"]').val(r.data.id);
+                    }                    
                     $.product.refresh();
                     $('#s-product-save-button').removeClass('yellow green').addClass('green');
 

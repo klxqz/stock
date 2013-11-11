@@ -31,24 +31,40 @@ class shopStockPlugin extends shopPlugin {
     public function frontendNav() {
 
         if ($this->getSettings('status') && $this->getSettings('default_output')) {
-            return self::display();
+            return self::shortList();
         }
     }
 
-    public static function display() {
+    public static function shortList() {
         $plugin = self::getThisPlugin();
         if ($plugin->getSettings('status')) {
             $stock_model = new shopStockPluginModel();
             $collection = new shopStockProductsCollection();
-            $collection->stockFilter(); 
-            $products = $collection->getProducts('*', 0, 10);
-            foreach($products as &$product) {
-                $stock = $stock_model->getByField('product_id',$product['id']);
+            $collection->stockFilter();
+            $products = $collection->getProducts('*', 0, $plugin->getSettings('count'));
+            foreach ($products as &$product) {
+                $stock = $stock_model->getByField('product_id', $product['id']);
                 $product['stock'] = $stock;
             }
             $view = wa()->getView();
             $view->assign('stock_products', $products);
             $html = $view->fetch('plugins/stock/templates/FrontendNav.html');
+            return $html;
+        }
+    }
+
+    public static function stockInfo($product_id) {
+        $plugin = self::getThisPlugin();
+        if ($plugin->getSettings('status')) {
+            $stock_model = new shopStockPluginModel();
+            $stock = $stock_model->getByField('product_id', $product_id);
+            $view = wa()->getView();
+            $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
+            $time = strtotime($stock['date_end']) - strtotime($now);
+            $view->assign('stock', $stock);
+            $view->assign('time', $time);
+            $template_path = wa()->getAppPath('plugins/stock/templates/StockInfo.html', 'shop');
+            $html = $view->fetch($template_path);
             return $html;
         }
     }
@@ -88,9 +104,12 @@ class shopStockPlugin extends shopPlugin {
                 if ($stock['type'] == 'discount' && $stock['discount_type'] == 'percent_discount') {
                     $percent_discount = $stock['percent_discount'];
                     $total = $item['price'] * $item['quantity'];
-                    return ceil($total * $percent_discount / 100);
+                    $total = shop_currency($total, null, null, false);
+                    $discount = ceil($total * $percent_discount / 100);
+                    return $discount;
                 } elseif ($stock['type'] == 'discount' && $stock['discount_type'] == 'new_price') {
                     $new_total = $stock['new_price'] * $item['quantity'];
+                    $total = shop_currency($new_total, null, null, false);
                     return $item['full_price'] - $new_total;
                 } elseif ($stock['type'] == 'gift') {
                     $cart_model = new shopCartItemsModel();
@@ -114,8 +133,8 @@ class shopStockPlugin extends shopPlugin {
                         $redirect = wa()->getRouteUrl('/frontend/cart');
                         wa()->getResponse()->redirect($redirect);
                     }
-
-                    return $sku['price'];
+                    $discount = shop_currency($sku['price'], null, null, false);
+                    return $discount;
                 }
             }
         }
