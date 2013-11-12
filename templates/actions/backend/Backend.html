@@ -20,20 +20,20 @@
 
 <div class="field">
     <div class="name">Название акции</div>
-    <div class="value"><input type="text" name="shop_stock[name]" value="{$stock.name}" class="long bold"></div>
+    <div class="value"><input type="text" name="shop_stock[name]" value="{$stock.name|escape}" class="long bold"></div>
 </div>
 
 <div class="field">
     <div class="name">Описание</div>
     <div class="value">
-        <textarea name="shop_stock[description]">{$stock.description}</textarea>
+        <textarea name="shop_stock[description]">{$stock.description|escape}</textarea>
     </div>
 </div>
 
 <div class="field">
     <div class="name">Дата начала акции</div>
     <div class="value">
-        <input class="date" type="text" name="shop_stock[date_begin]" value="{$stock.date_begin}">
+        <input class="date" type="text" name="shop_stock[date_begin]" value="{$stock.date_begin|escape}">
 
     </div>
 </div>
@@ -41,7 +41,7 @@
 <div class="field">
     <div class="name">Дата завершения акции</div>
     <div class="value">
-        <input class="date" type="text" name="shop_stock[date_end]" value="{$stock.date_end}">
+        <input class="date" type="text" name="shop_stock[date_end]" value="{$stock.date_end|escape}">
 
     </div>
 </div>
@@ -49,7 +49,7 @@
 <div class="field">
     <div class="name">Количество товаров</div>
     <div class="value">
-        <input class="short numerical" type="text" name="shop_stock[count]" placeholder="0" value="{$stock.count}">
+        <input class="short numerical" type="text" name="shop_stock[count]" placeholder="0" value="{$stock.count|escape}">
         <div class="hint">Количество аукционного товара, которое должен положить в корзину покупатель для активации акции</div>
     </div>
 </div>
@@ -78,14 +78,14 @@
     <div id="option_percent_discount" class="field discount_type_option">
         <div class="name">Процентная скидка</div>
         <div class="value">
-            <input class="short bold numerical" type="text" name="shop_stock[percent_discount]" placeholder="0" value="{$stock.percent_discount}"><span>%</span>
+            <input class="short bold numerical" type="text" name="shop_stock[percent_discount]" placeholder="0" value="{$stock.percent_discount|escape}"><span>%</span>
         </div>
     </div>
 
     <div id="option_new_price" class="field discount_type_option">
         <div class="name">Новая цена</div>
         <div class="value">
-            <input class="short bold numerical" type="text" name="shop_stock[new_price]" placeholder="0" value="{(float)$stock.new_price}"><span>{$def_currency}</span>
+            <input class="short bold numerical" type="text" name="shop_stock[new_price]" placeholder="0" value="{(float)$stock.new_price|escape}"><span>{$def_currency}</span>
         </div>
     </div>
 </div>
@@ -93,7 +93,7 @@
 <div  class="field stock_type" id="type_gift">
     <div class="name">Артикул подарочного товара</div>
     <div class="value">
-        <input class="short" placeholder="Артикул" type="text" name="shop_stock[sku_gift]" value="{$stock.sku_gift}">
+        <input class="short" placeholder="Артикул" type="text" name="shop_stock[sku_gift]" value="{$stock.sku_gift|escape}">
     </div>
 </div>
 

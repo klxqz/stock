@@ -32,14 +32,14 @@
             </div>
             <div class="stockproducts_name">
                 <a href="{$product.frontend_url}">
-                    <span itemprop="name">{$product.name|truncate:60}</span>
+                    <span itemprop="name">{$product.name|escape}</span>
                 </a>
             </div>
             <div class="product-price">
                 <span class="price nowrap" itemprop="price">{shop_currency($product.price)}</span>
             </div>
             <div class="stock_title">
-                {$product.stock.name}
+                {$product.stock.name|escape}
             </div>
 
             <div class="countdown_block">
