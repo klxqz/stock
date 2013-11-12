@@ -44,11 +44,20 @@ class shopStockPlugin extends shopPlugin {
             $products = $collection->getProducts('*', 0, $plugin->getSettings('count'));
             foreach ($products as &$product) {
                 $stock = $stock_model->getByField('product_id', $product['id']);
+
+                $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
+                $time = strtotime($stock['date_end']) - strtotime($now);
+                $stock['time'] = $time;
                 $product['stock'] = $stock;
             }
             $view = wa()->getView();
             $view->assign('stock_products', $products);
-            $html = $view->fetch('plugins/stock/templates/FrontendNav.html');
+
+            $template_path = wa()->getDataPath('plugins/stock/templates/FrontendNav.html', false, 'shop', true);
+            if (!file_exists($template_path)) {
+                $template_path = wa()->getAppPath('plugins/stock/templates/FrontendNav.html', 'shop');
+            }
+            $html = $view->fetch($template_path);
             return $html;
         }
     }
@@ -63,7 +72,10 @@ class shopStockPlugin extends shopPlugin {
             $time = strtotime($stock['date_end']) - strtotime($now);
             $view->assign('stock', $stock);
             $view->assign('time', $time);
-            $template_path = wa()->getAppPath('plugins/stock/templates/StockInfo.html', 'shop');
+            $template_path = wa()->getDataPath('plugins/stock/templates/StockInfo.html', false, 'shop', true);
+            if (!file_exists($template_path)) {
+                $template_path = wa()->getAppPath('plugins/stock/templates/StockInfo.html', 'shop');
+            }
             $html = $view->fetch($template_path);
             return $html;
         }
@@ -81,7 +93,12 @@ class shopStockPlugin extends shopPlugin {
                 $time = strtotime($stock['date_end']) - strtotime($now);
                 $view->assign('stock', $stock);
                 $view->assign('time', $time);
-                $html = $view->fetch('plugins/stock/templates/FrontendProduct.html');
+
+                $template_path = wa()->getDataPath('plugins/stock/templates/FrontendProduct.html', false, 'shop', true);
+                if (!file_exists($template_path)) {
+                    $template_path = wa()->getAppPath('plugins/stock/templates/FrontendProduct.html', 'shop');
+                }
+                $html = $view->fetch($template_path);
                 $frontend_product_output = $this->getSettings('frontend_product_output');
                 return array($frontend_product_output => $html);
             }

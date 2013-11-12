@@ -2,7 +2,11 @@
 
 class shopStockPluginBackendSavesettingsController extends waJsonController {
 
-    protected $tmp_path = 'plugins/stock/templates/FrontendNav.html';
+    protected $templates = array(
+        'FrontendNav' => array('name' => 'Шаблон краткого списка', 'tpl_path' => 'plugins/stock/templates/FrontendNav.html'),
+        'FrontendProduct' => array('name' => 'Шаблон в карточке товара', 'tpl_path' => 'plugins/stock/templates/FrontendProduct.html'),
+        'StockInfo' => array('name' => 'Шаблон "Информация об акции"', 'tpl_path' => 'plugins/stock/templates/StockInfo.html'),
+    );
     protected $plugin_id = array('shop', 'stock');
 
     public function execute() {
@@ -13,33 +17,37 @@ class shopStockPluginBackendSavesettingsController extends waJsonController {
             foreach ($settings as $name => $value) {
                 $app_settings_model->set($this->plugin_id, $name, $value);
             }
-            
-            $reset_tpl = waRequest::post('reset_tpl');
 
-            if ($reset_tpl) {
-                $template_path = wa()->getDataPath($this->tmp_path, false, 'shop', true);
-                @unlink($template_path);
-            } else {
-                $post_template = waRequest::post('template');
-                if (!$post_template) {
-                    throw new waException('Не определён шаблон');
-                }
+            $post_templates = waRequest::post('templates');
+            $reset_tpls = waRequest::post('reset_tpls');
 
-                $template_path = wa()->getDataPath($this->tmp_path, false, 'shop', true);
-                if (!file_exists($template_path)) {
-                    $template_path = wa()->getAppPath($this->tmp_path, 'shop');
-                }
-
-                $template = file_get_contents($template_path);
-                if ($template != $post_template) {
-                    $template_path = wa()->getDataPath($this->tmp_path, false, 'shop', true);
-
-                    $f = fopen($template_path, 'w');
-                    if (!$f) {
-                        throw new waException('Не удаётся сохранить шаблон. Проверьте права на запись ' . $template_path);
+            foreach ($this->templates as $id => $template) {
+                if (isset($reset_tpls[$id])) {
+                    $template_path = wa()->getDataPath($template['tpl_path'], false, 'shop', true);
+                    @unlink($template_path);
+                } else {
+                    
+                    if (!isset($post_templates[$id])) {
+                        throw new waException('Не определён шаблон');
                     }
-                    fwrite($f, $post_template);
-                    fclose($f);
+                    $post_template = $post_templates[$id];
+
+                    $template_path = wa()->getDataPath($template['tpl_path'], false, 'shop', true);
+                    if (!file_exists($template_path)) {
+                        $template_path = wa()->getAppPath($template['tpl_path'], 'shop');
+                    }
+
+                    $template_content = file_get_contents($template_path);
+                    if ($template_content != $post_template) {
+                        $template_path = wa()->getDataPath($template['tpl_path'], false, 'shop', true);
+
+                        $f = fopen($template_path, 'w');
+                        if (!$f) {
+                            throw new waException('Не удаётся сохранить шаблон. Проверьте права на запись ' . $template_path);
+                        }
+                        fwrite($f, $post_template);
+                        fclose($f);
+                    }
                 }
             }
 

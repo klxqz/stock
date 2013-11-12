@@ -1,3 +1,4 @@
+{if $stock_products}
 {literal}
 <style type="text/css">
     .stockproducts ul{padding: 0px;}
@@ -8,9 +9,17 @@
     .product-price{text-align: center;}
     .stockproducts_link{text-align: center;}
     .stock_title{font-weight: bold; color:#ff0000; text-align: center}
+    .countdown_block > div{margin: 0 auto !important;}
+    .last_time{color:#ccc;font-size: 10px; text-align: center}
 </style>
 {/literal}
-{if $stock_products}
+
+<script type="text/javascript">
+    var CountdownImageFolder = "{$wa_app_static_url}plugins/stock/img/countdown/";
+    if (typeof (Countdown) == 'undefined') {
+        document.write('<scr' + 'ipt src="{$wa_app_static_url}plugins/stock/js/countdown.js" type="text/javascript"></sc' + 'ript>');
+    }
+</script>
 <div class="stockproducts">
     <div class="stockproducts_title">Акции</div>
     <ul>
@@ -32,6 +41,20 @@
             <div class="stock_title">
                 {$product.stock.name}
             </div>
+
+            <div class="countdown_block">
+                <div class="last_time">Осталось до конца акции</div>
+                <script type="application/javascript">
+                    new Countdown({
+                    time: {$product.stock.time},
+                    width:200, 
+                    height:60,  
+                    rangeHi:"day",
+                    style:"flip"
+                    });
+                </script>
+            </div>
+
         </li>
         {/foreach}
     </ul>
