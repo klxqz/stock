@@ -3,7 +3,7 @@
 return array(
     'name' => 'Акции',
     'description' => 'Возможность организовать акцию на сайте',
-    'vendor'=>903438,
+    'vendor'=> '985310',
     'version'=>'1.0.0',
     'img'=>'img/stock.png',
     'frontend'    => true,

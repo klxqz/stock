@@ -10,6 +10,7 @@ class shopStockProductsCollection extends shopProductsCollection
         
         $stock_model = new shopStockPluginModel();
         $stocks = $stock_model->getActiveStock();
+        
         if(!$stocks) {
             return false;
         }

@@ -40,15 +40,16 @@ class shopStockPlugin extends shopPlugin {
         if ($plugin->getSettings('status')) {
             $stock_model = new shopStockPluginModel();
             $collection = new shopStockProductsCollection();
-            $collection->stockFilter();
-            $products = $collection->getProducts('*', 0, $plugin->getSettings('count'));
-            foreach ($products as &$product) {
-                $stock = $stock_model->getByField('product_id', $product['id']);
-
-                $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-                $time = strtotime($stock['date_end']) - strtotime($now);
-                $stock['time'] = $time;
-                $product['stock'] = $stock;
+            $products = array();
+            if ($collection->stockFilter()) {
+                $products = $collection->getProducts('*', 0, $plugin->getSettings('count'));
+                foreach ($products as &$product) {
+                    $stock = $stock_model->getByField('product_id', $product['id']);
+                    $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
+                    $time = strtotime($stock['date_end']) - strtotime($now);
+                    $stock['time'] = $time;
+                    $product['stock'] = $stock;
+                }
             }
             $view = wa()->getView();
             $view->assign('stock_products', $products);
