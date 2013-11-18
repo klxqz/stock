@@ -67,7 +67,7 @@ class shopStockPlugin extends shopPlugin {
         $plugin = self::getThisPlugin();
         if ($plugin->getSettings('status')) {
             $stock_model = new shopStockPluginModel();
-            $stock = $stock_model->getByField('product_id', $product_id);
+            $stock = $stock_model->getActiveStockByProduct($product_id);
             $view = wa()->getView();
             $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
             $time = strtotime($stock['date_end']) - strtotime($now);
@@ -87,7 +87,7 @@ class shopStockPlugin extends shopPlugin {
         if ($this->getSettings('status') && $this->getSettings('frontend_product')) {
 
             $stock_model = new shopStockPluginModel();
-            $stock = $stock_model->getByField('product_id', $product->id);
+            $stock = $stock_model->getActiveStockByProduct($product->id);
             if ($stock) {
                 $view = wa()->getView();
                 $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
@@ -113,7 +113,7 @@ class shopStockPlugin extends shopPlugin {
 
             foreach ($params['order']['items'] as $item) {
                 $count = $item['quantity'];
-                $stock = $stock_model->getByField('product_id', $item['product']['id']);
+                $stock = $stock_model->getActiveStockByProduct($item['product']['id']);
 
                 if ($count < $stock['count']) {
                     continue;
