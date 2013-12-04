@@ -3,10 +3,10 @@
 return array(
     'name' => 'Акции',
     'description' => 'Возможность организовать акцию на сайте',
-    'vendor'=> '985310',
-    'version'=>'1.0.0',
-    'img'=>'img/stock.png',
-    'frontend'    => true,
+    'vendor' => '985310',
+    'version' => '1.0.0',
+    'img' => 'img/stock.png',
+    'frontend' => true,
     'shop_settings' => true,
     'handlers' => array(
         'backend_product' => 'backendProduct',
@@ -14,5 +14,4 @@ return array(
         'order_calculate_discount' => 'orderCalculateDiscount',
         'frontend_nav' => 'frontendNav',
     ),
-
 );
