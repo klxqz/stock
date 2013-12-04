@@ -23,6 +23,8 @@
     <div class="value"><input type="text" name="shop_stock[name]" value="{$stock.name|escape}" class="long bold"></div>
 </div>
 
+
+
 <div class="field">
     <div class="name">Описание</div>
     <div class="value">
@@ -34,7 +36,6 @@
     <div class="name">Дата начала акции</div>
     <div class="value">
         <input class="date" type="text" name="shop_stock[date_begin]" value="{$stock.date_begin|escape}">
-
     </div>
 </div>
 
@@ -70,8 +71,8 @@
     <div class="field">
         <div class="name">Тип скидки</div>
         <div class="value">
-            <input type="radio" {if $stock.discount_type=='percent_discount'}checked="checked"{/if} name="shop_stock[discount_type]" value="percent_discount" /> - процентная скидка
-            <input type="radio" {if $stock.discount_type=='new_price'}checked="checked"{/if} name="shop_stock[discount_type]" value="new_price" /> - новая цена
+            <input type="radio" {if $stock.discount_type=='percent_discount'  || !$stock.discount_type}checked="checked"{/if} name="shop_stock[discount_type]" value="percent_discount" /> - процентная скидка
+                   <input type="radio" {if $stock.discount_type=='new_price'}checked="checked"{/if} name="shop_stock[discount_type]" value="new_price" /> - новая цена
         </div>
     </div>
 
