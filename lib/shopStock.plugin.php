@@ -85,7 +85,6 @@ class shopStockPlugin extends shopPlugin {
     public function frontendProduct($product) {
 
         if ($this->getSettings('status') && $this->getSettings('frontend_product')) {
-
             $stock_model = new shopStockPluginModel();
             $stock = $stock_model->getActiveStockByProduct($product->id);
             if ($stock) {
@@ -110,7 +109,7 @@ class shopStockPlugin extends shopPlugin {
 
         if ($this->getSettings('status')) {
             $stock_model = new shopStockPluginModel();
-
+            $discount = 0;
             foreach ($params['order']['items'] as $item) {
                 $count = $item['quantity'];
                 $stock = $stock_model->getActiveStockByProduct($item['product']['id']);
@@ -123,12 +122,13 @@ class shopStockPlugin extends shopPlugin {
                     $percent_discount = $stock['percent_discount'];
                     $total = $item['price'] * $item['quantity'];
                     $total = shop_currency($total, null, null, false);
-                    $discount = ceil($total * $percent_discount / 100);
-                    return $discount;
+                    $discount += ceil($total * $percent_discount / 100);
                 } elseif ($stock['type'] == 'discount' && $stock['discount_type'] == 'new_price') {
+                    $total = $item['price'] * $item['quantity'];
+                    $total = shop_currency($total, null, null, false);
                     $new_total = $stock['new_price'] * $item['quantity'];
-                    $total = shop_currency($new_total, null, null, false);
-                    return $item['full_price'] - $new_total;
+                    $new_total = shop_currency($new_total, null, null, false);
+                    $discount += $total - $new_total;
                 } elseif ($stock['type'] == 'gift') {
                     $cart_model = new shopCartItemsModel();
                     $code = waRequest::cookie('shop_cart');
@@ -151,9 +151,12 @@ class shopStockPlugin extends shopPlugin {
                         $redirect = wa()->getRouteUrl('/frontend/cart');
                         wa()->getResponse()->redirect($redirect);
                     }
-                    $discount = shop_currency($sku['price'], null, null, false);
-                    return $discount;
+                    $discount += shop_currency($sku['price'], null, null, false);
                 }
+            }
+
+            if ($discount) {
+                return $discount;
             }
         }
     }
@@ -246,7 +249,6 @@ class shopStockPlugin extends shopPlugin {
                 }
             }
             // update shop cart session data
-            $shop_cart = new shopCart();
             wa()->getStorage()->remove('shop/cart');
             return true;
         } else {
