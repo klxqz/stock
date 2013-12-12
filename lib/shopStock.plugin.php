@@ -37,6 +37,7 @@ class shopStockPlugin extends shopPlugin {
 
     public static function shortList() {
         $plugin = self::getThisPlugin();
+        $html = '';
         if ($plugin->getSettings('status')) {
             $stock_model = new shopStockPluginModel();
             $collection = new shopStockProductsCollection();
@@ -59,11 +60,13 @@ class shopStockPlugin extends shopPlugin {
                 $template_path = wa()->getAppPath('plugins/stock/templates/FrontendNav.html', 'shop');
             }
             $html = $view->fetch($template_path);
-            return $html;
         }
+        waSystem::popActivePlugin();
+        return $html;
     }
 
     public static function stockInfo($product_id) {
+        $html = '';
         $plugin = self::getThisPlugin();
         if ($plugin->getSettings('status')) {
             $stock_model = new shopStockPluginModel();
@@ -78,8 +81,9 @@ class shopStockPlugin extends shopPlugin {
                 $template_path = wa()->getAppPath('plugins/stock/templates/StockInfo.html', 'shop');
             }
             $html = $view->fetch($template_path);
-            return $html;
         }
+        waSystem::popActivePlugin();
+        return $html;
     }
 
     public function frontendProduct($product) {

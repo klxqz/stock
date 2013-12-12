@@ -26,6 +26,7 @@ class shopStockPluginSettingsAction extends waViewAction {
 
         $this->view->assign('settings', $settings);
         $this->view->assign('templates', $this->templates);
+        waSystem::popActivePlugin();
     }
 
 }
