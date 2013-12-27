@@ -124,14 +124,11 @@ class shopStockPlugin extends shopPlugin {
 
                 if ($stock['type'] == 'discount' && $stock['discount_type'] == 'percent_discount') {
                     $percent_discount = $stock['percent_discount'];
-                    $total = $item['price'] * $item['quantity'];
-                    $total = shop_currency($total, null, null, false);
+                    $total = shop_currency($item['price'] * $item['quantity'], $item['currency'], null, false);
                     $discount += ceil($total * $percent_discount / 100);
                 } elseif ($stock['type'] == 'discount' && $stock['discount_type'] == 'new_price') {
-                    $total = $item['price'] * $item['quantity'];
-                    $total = shop_currency($total, null, null, false);
-                    $new_total = $stock['new_price'] * $item['quantity'];
-                    $new_total = shop_currency($new_total, null, null, false);
+                    $total = shop_currency($item['price'] * $item['quantity'], $item['currency'], null, false);
+                    $new_total = shop_currency($stock['new_price'] * $item['quantity'], null, null, false);
                     $discount += $total - $new_total;
                 } elseif ($stock['type'] == 'gift') {
                     $cart_model = new shopCartItemsModel();
@@ -144,24 +141,70 @@ class shopStockPlugin extends shopPlugin {
                     $sku = $sku_model->getByField('sku', $stock['sku_gift']);
                     $session = wa()->getStorage();
 
-                    if (!$session->read('stockplugin_' . $stock['sku_gift']) || !$cart_model->countSku($code, $sku['id'])) {
+                    $gift_quantity = floor($count / $stock['count']);
+
+                    $session_data = $session->read('stockplugin');
+                    $session_gift_count = isset($session_data[$sku['id']]) ? $session_data[$sku['id']] : 0;
+
+                    if (!$session_gift_count || $cart_model->countSku($code, $sku['id']) < $gift_quantity) {
+
+                        $add_quantity = $gift_quantity - $cart_model->countSku($code, $sku['id']);
                         $data = array(
                             'sku_id' => $sku['id'],
                             'product_id' => $sku['product_id'],
-                            'quantity' => 1,
+                            'quantity' => $add_quantity,
                         );
                         $this->addToCart($data);
-                        $session->write('stockplugin_' . $stock['sku_gift'], 1);
-                        $redirect = wa()->getRouteUrl('/frontend/cart');
-                        wa()->getResponse()->redirect($redirect);
+                        $session_data[$sku['id']] = $gift_quantity;
+                        $session->write('stockplugin', $session_data);
                     }
-                    $discount += shop_currency($sku['price'], null, null, false);
+                    $product_model = new shopProductModel();
+                    $product = $product_model->getById($sku['product_id']);
+                    $discount += shop_currency($sku['price'] * $gift_quantity, $product['currency'], null, false);
                 }
             }
 
             if ($discount) {
                 return $discount;
             }
+        }
+    }
+
+    public function orderActionCreate($params) {
+        if ($this->getSettings('status')) {
+            $session = wa()->getStorage();
+            $session->remove('stockplugin');
+        }
+    }
+
+    public function frontendCart() {
+        if ($this->getSettings('status')) {
+            $stocks = array();
+            $product_model = new shopProductModel();
+            $stock_model = new shopStockPluginModel();
+            $cart = new shopCart();
+            $items = $cart->items();
+            foreach ($items as $item) {
+                $count = $item['quantity'];
+                $stock = $stock_model->getActiveStockByProduct($item['product']['id']);
+                if (!$stock || $count < $stock['count']) {
+                    continue;
+                }
+                $stock['product'] = $product_model->getById($stock['product_id']);
+                $stocks[] = $stock;
+            }
+
+
+            $view = wa()->getView();
+            $view->assign('stocks', $stocks);
+            $view->assign('frontend_cart', $this->getSettings('frontend_cart'));
+            
+            $template_path = wa()->getDataPath('plugins/stock/templates/FrontendCart.html', false, 'shop', true);
+            if (!file_exists($template_path)) {
+                $template_path = wa()->getAppPath('plugins/stock/templates/FrontendCart.html', 'shop');
+            }
+            $html = $view->fetch($template_path);
+            return $html;
         }
     }
 

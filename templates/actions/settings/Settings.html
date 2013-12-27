@@ -101,6 +101,20 @@
                 </div>
             </div>
         </div>
+        
+        <div class="field-group">
+            <div class="field">
+                <div class="name">
+                    Вывод информации об акции в корзине
+                </div>
+                <div class="value">
+                    <select name="shop_stock[frontend_cart]">
+                        <option {if $settings.frontend_cart == 1} selected="selected"{/if} value="1">Включен</option>
+                        <option {if $settings.frontend_cart == 0} selected="selected"{/if} value="0">Выключен</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
 
         {foreach from=$templates key=key item=template}
@@ -135,7 +149,7 @@
 <script type="text/javascript">
     $(function() {
 
-        var ids = ["sf-template-FrontendNav", "sf-template-FrontendProduct", "sf-template-StockInfo"];
+        var ids = ["sf-template-FrontendNav", "sf-template-FrontendProduct", "sf-template-FrontendCart", "sf-template-StockInfo"];
         for (var i = 0; i < ids.length; i++) {
             
             var c = CodeMirror.fromTextArea(document.getElementById(ids[i]), {

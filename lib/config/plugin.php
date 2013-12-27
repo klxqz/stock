@@ -13,5 +13,7 @@ return array(
         'frontend_product' => 'frontendProduct',
         'order_calculate_discount' => 'orderCalculateDiscount',
         'frontend_nav' => 'frontendNav',
+        'frontend_cart' => 'frontendCart',
+        'order_action.create' => 'orderActionCreate',
     ),
 );
