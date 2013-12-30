@@ -1,18 +1,18 @@
-$.product.editTabLoadContent = function(path, params) {
-    var self = $.product;
-    path = path || $.product.path;
-
-    if (path.tab == 'stock') {
-        var url = '?plugin=stock&id=' + path.id;
-    } else {
-        var url = '?module=product&action=' + path.tab + '&id=' + path.id;
+$.product.editTabLoadContent = function(path, post) {
+    var self = this;
+    path = path || this.path;
+    var url = '?module=product&action=' + path.tab + '&id=' + path.id;
+    if (path.tab == 'stockslog') {
+        url = '?module=product&action=stocksLog&id=' + path.id;
     }
-
-    if (path.tail && (typeof (path.tail) != 'undefined')) {
+    if (path.tab == 'stock') {
+        url = '?plugin=stock&id=' + path.id;
+    }
+    if (path.tail) {
         url += '&param[]=' + path.tail.split('/').join('&param[]=');
     }
     var r = Math.random();
-    $.product.ajax.random = r;
+    this.ajax.random = r;
     var $tab = $('#s-product-edit-forms .s-product-form.' + path.tab);
     if ($tab.length) {
         $tab.remove();
@@ -21,14 +21,27 @@ $.product.editTabLoadContent = function(path, params) {
         id: path.tab
     }));
     $tab = $('#s-product-edit-forms .s-product-form.' + path.tab);
-    $.product.ajax.target = $tab;
-    $.product.ajax.link = $('#s-product-edit-menu li.' + path.tab);
-    $.shop.trace('$.product.editTabLoadContent', [path, url, params]);
+    this.ajax.target = $tab;
+    this.ajax.link = $('#s-product-edit-menu li.' + path.tab);
+    $.shop.trace('$.product.editTabLoadContent', [path, url, path.params]);
+    if (path.params && post) {
+        var type = typeof (path.params);
+        switch (type) {
+            case 'String':
+                url += path.params;
+                break;
+            case 'Array':
+                url += path.params.serialize();
+                break;
+            default:
+                $.shop.error('unexpected type ' + type, path.params);
+        }
+    }
     $.ajax({
-        'url': url,
-        'type': params ? 'POST' : 'GET',
-        'data': params || {},
-        'success': function(data, textStatus, jqXHR) {
+        url: url,
+        type: post ? 'POST' : 'GET',
+        data: post ? (post || {}) : (path.params || {}),
+        success: function(data, textStatus) {
             $.shop.trace('$.product.loadTab status=' + textStatus);
             if (self.ajax.random != r) {
                 // too late: user clicked something else.
@@ -43,6 +56,17 @@ $.product.editTabLoadContent = function(path, params) {
             }
             if (path.tail) {
                 hash += path.tail + '/';
+            }
+            if (path.params) {
+                if (!$.isEmptyObject(path.params)) {
+                    var ar = [];
+                    for (var k in path.params) {
+                        if (path.params.hasOwnProperty(k)) {
+                            ar.push(k + '=' + path.params[k]);
+                        }
+                    }
+                    hash += ar.join('&');
+                }
             }
             window.location.hash = hash;
             self.dispatch(path);
