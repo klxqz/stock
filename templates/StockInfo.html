@@ -1,0 +1,34 @@
+{if $stock}
+
+<script type="text/javascript">
+    var CountdownImageFolder = "{$wa_app_static_url}plugins/stock/img/countdown/";
+    if (typeof (Countdown) == 'undefined') {
+        document.write('<scr' + 'ipt src="{$wa_app_static_url}plugins/stock/js/countdown.js" type="text/javascript"></sc' + 'ript>');
+    }
+</script>
+
+{literal}
+<style type="text/css">
+    .stock_name{font-weight: bold;color: #ff0000;}
+    .stock_block{width: 200px;margin: 0 auto;text-align: center;}
+    .last_time{color:#ccc;font-size: 10px; text-align: center}
+</style>
+{/literal}
+<div class="stock_block">
+    <div class="stock_name">{$stock.name|escape}</div>
+
+    <div class="countdown_block">
+        <div class="last_time">Осталось до конца акции</div>
+        <script type="application/javascript">
+            new Countdown({
+            time: {$time},
+            width:200, 
+            height:60,  
+            rangeHi:"day",
+            style:"flip"
+            });
+        </script>
+
+    </div>
+</div>
+{/if}

@@ -1,0 +1,27 @@
+<script>
+    $(function() {
+        var cart_total = $('.cart-total').html();
+        setInterval(function() {
+            if (cart_total != $('.cart-total').html()) {
+                location.reload();
+                cart_total = $('.cart-total').html();
+            }
+        }, 500);
+    });
+</script>
+<style>
+    #stock_cart_block{
+        color:red;
+        font-weight: bold;
+    }
+</style>
+
+{if $frontend_cart}
+<div id="stock_cart_block">
+    {foreach $stocks as $stock}
+    <div class="stock_cart_item">
+        Акция для товара {$stock.product.name}. {$stock.description}
+    </div>
+    {/foreach}
+</div>
+{/if}
