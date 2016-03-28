@@ -1,140 +1,62 @@
-(function($) {
-    $.product_stock = {
+(function ($) {
+    $.products.stockListAction = function () {
+        this.load('?plugin=stock', function () {
+            $("#s-sidebar li.selected").removeClass('selected');
+            $("#s-stocks").addClass('selected');
+        });
+    }
+    $.products.stockAddAction = function () {
+        this.load('?plugin=stock&action=stock');
+    }
+    $.products.stockAction = function (id) {
+        this.load('?plugin=stock&action=stock&id=' + id);
+    }
 
-        /**
-         * {Number}
-         */
-        service_id: 0,
+    function showDialog() {
+        $('#stock-dialog').waDialog({
+            disableButtonsOnSubmit: false,
+            onLoad: function () {
 
-        /**
-         * {Number}
-         */
-        product_id: 0,
+            },
+            onSubmit: function (d) {
+                var post_data = '';
+                $('table#product-list tr.product td input[type=checkbox]:checked').each(function () {
+                    post_data = post_data + '&product_id[]=' + $(this).closest('tr.product').data('product-id');
+                });
 
-        /**
-         * {Jquery object}
-         */
-        form: null,
-
-        /**
-         * Keep track changing of form
-         * {String}
-         */
-        form_serialized_data: '',
-
-        /**
-         * {Jquery object}
-         */
-        container: null,
-
-        button_color: null,
-
-        /**
-         * {Object}
-         */
-        options: {},
-
-        init: function(options) {
-            this.options = options;
-            if (options.container) {
-                if (typeof options.container === 'object') {
-                    this.container = options.container;
-                } else {
-                    this.container = $(options.container);
-                }
-            }
-            if (options.counter) {
-                if (typeof options.counter === 'object') {
-                    this.counter = options.counter;
-                } else {
-                    this.counter = $(options.counter);
-                }
-            }
-
-            this.service_id = parseInt(this.options.service_id, 10) || 0;
-            this.product_id = parseInt(this.options.product_id, 10) || 0;
-            this.form = $('#s-product-save');
-
-            if (this.product_id) {
-
-                // maintain intearaction with $.product object
-
-
-
-                $.product.editTabStockBlur = function() {
-                    var that = $.product_stock;
-
-                    if (that.form_serialized_data != that.form.serialize()) {
-                        $.product_stock.save();
+                var self = $(this);
+                self.find('i.loading').show();
+                $.ajax({
+                    type: 'POST',
+                    url: self.attr('action'),
+                    data: self.serialize() + post_data,
+                    dataType: 'json',
+                    success: function (data, textStatus, jqXHR) {
+                        self.find('i.loading').hide();
+                        if (data.status == 'ok') {
+                            $('#stock-dialog').trigger('close');
+                        } else if (data.status == 'fail') {
+                            $('.stock-response').text(data.errors);
+                            $('.stock-response').css('color', 'red');
+                            $('.stock-response').show();
+                        }
                     }
-                };
-
-                $.product.editTabStockSave = function() {
-                    $.product_stock.save();
-                };
-
-                var that = this;
-                var button = $('#s-product-save-button');
-
-                // some extra initializing
-                that.container.addClass('ajax');
-                that.form_serialized_data = that.form.serialize();
-                that.counter.text(that.options.count);
-
+                });
+                return false;
             }
-            this.discountTypeInit();
-            this.typeInit();
-                
-        },
-        
-        discountTypeInit: function() {
-            var val = $('input[name="shop_stock[discount_type]"]').val();
-            $('.discount_type_option').hide();
-            $('#option_' + val).show();
-            
-            $('input[name="shop_stock[discount_type]"]').change(function(){
-                var val = $(this).val();
-                $('.discount_type_option').hide();
-                $('#option_' + val).show();
-            });
-        },
-        
-        typeInit: function() {
-            var val = $('select[name="shop_stock[type]"]').val();
-            $('.stock_type').hide();
-            $('#type_' + val).show();
-            
-            $('select[name="shop_stock[type]"]').change(function(){
-                var val = $(this).val();
-                $('.stock_type').hide();
-                $('#type_' + val).show();
-            });
-        },
+        });
+    }
 
+    $(document).on('click', '.add-stock-products', function () {
+        $.ajax({
+            type: 'GET',
+            url: '?plugin=stock&action=dialog',
+            success: function (data, textStatus, jqXHR) {
+                $('#stock-dialog').html(data);
+                showDialog();
+            }
+        });
 
-        save: function() {
-
-            var form = $.product_stock.form;
-            var that = this;
-            $.product.refresh('submit');
-            
-            var url = '?plugin=stock&action=save';
-            return $.shop.jsonPost(
-                url,
-                form.serialize(),
-                function(r) {
-                    if(r.data.id) {
-                        $('input[name="shop_stock[id]"]').val(r.data.id);
-                    }                    
-                    $.product.refresh();
-                    $('#s-product-save-button').removeClass('yellow green').addClass('green');
-
-                    that.form_serialized_data = form.serialize();
-
-                    $.products.dispatch();
-                }
-            );
-        },
-        
-    };
+        return false;
+    });
 })(jQuery);

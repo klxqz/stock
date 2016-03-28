@@ -2,33 +2,58 @@
 
 class shopStockPluginSettingsAction extends waViewAction {
 
-    protected $templates = array(
-        'FrontendNav' => array('name' => 'Шаблон краткого списка', 'tpl_path' => 'plugins/stock/templates/FrontendNav.html'),
-        'FrontendProduct' => array('name' => 'Шаблон в карточке товара', 'tpl_path' => 'plugins/stock/templates/FrontendProduct.html'),
-        'FrontendCart' => array('name' => 'Шаблон в корзине', 'tpl_path' => 'plugins/stock/templates/FrontendCart.html'),
-        'StockInfo' => array('name' => 'Шаблон "Информация об акции"', 'tpl_path' => 'plugins/stock/templates/StockInfo.html'),
-        
+    private $templates = array(
+        'Stock' => array(
+            'name' => 'Шаблон акции',
+            'tpl_path' => 'plugins/stock/templates/',
+            'tpl_name' => 'Stock',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
+        'FrontendCart' => array(
+            'name' => 'Шаблон вывода подарков в корзине',
+            'tpl_path' => 'plugins/stock/templates/',
+            'tpl_name' => 'FrontendCart',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
+        'FrontendStockList' => array(
+            'name' => 'Шаблон страницы «Список акций»',
+            'tpl_path' => 'plugins/stock/templates/actions/frontend/',
+            'tpl_name' => 'FrontendStockList',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
+        'FrontendStock' => array(
+            'name' => 'Шаблон страницы акции',
+            'tpl_path' => 'plugins/stock/templates/actions/frontend/',
+            'tpl_name' => 'FrontendStock',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
     );
 
     public function execute() {
-        $plugin = wa()->getPlugin('stock');
-        $settings = $plugin->getSettings();
+        $app_settings_model = new waAppSettingsModel();
+        $settings = $app_settings_model->get(shopStockPlugin::$plugin_id);
 
-
-        foreach ($this->templates as &$template) {
-            $template['full_path'] = wa()->getDataPath($template['tpl_path'], false, 'shop', true);
-            if (file_exists($template['full_path'])) {
-                $template['change_tpl'] = true;
+        $templates = array();
+        foreach ($this->templates as $template_id => $template) {
+            $tpl_full_path = $template['tpl_path'] . $template['tpl_name'] . '.' . $template['tpl_ext'];
+            $template_path = wa()->getDataPath($tpl_full_path, $template['public'], 'shop', true);
+            if (file_exists($template_path)) {
+                $template['template'] = file_get_contents($template_path);
+                $template['change_tpl'] = 1;
             } else {
-                $template['full_path'] = wa()->getAppPath($template['tpl_path'], 'shop');
-                $template['change_tpl'] = false;
+                $template_path = wa()->getAppPath($tpl_full_path, 'shop');
+                $template['template'] = file_get_contents($template_path);
+                $template['change_tpl'] = 0;
             }
-            $template['template'] = file_get_contents($template['full_path']);
+            $templates[$template_id] = $template;
         }
 
+        $this->view->assign('templates', $templates);
         $this->view->assign('settings', $settings);
-        $this->view->assign('templates', $this->templates);
-        waSystem::popActivePlugin();
     }
 
 }

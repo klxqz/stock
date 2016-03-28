@@ -1,0 +1,12 @@
+{if $stocks}
+    {foreach $stocks as $stock}
+        <div>
+            <h2>
+                <a href="{$wa->getUrl('shop/frontend/stock/<stock>/', ['stock' => $stock.page_url])}">{$stock.name}</a>
+            </h2>
+            {$stock.description}
+        </div>
+    {/foreach}
+{else}
+    <p>На данный момент в магазине не проводится акций.</p>
+{/if}

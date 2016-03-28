@@ -2,304 +2,355 @@
 
 class shopStockPlugin extends shopPlugin {
 
-    protected static $plugin;
+    public static $plugin_id = array('shop', 'stock');
 
-    public function __construct($info) {
-        parent::__construct($info);
-        if (!self::$plugin) {
-            self::$plugin = &$this;
+    public static function display($stock) {
+        $app_settings_model = new waAppSettingsModel();
+        if (!$app_settings_model->get(self::$plugin_id, 'status')) {
+            return false;
         }
-    }
-
-    protected static function getThisPlugin() {
-        if (self::$plugin) {
-            return self::$plugin;
-        } else {
-            return wa()->getPlugin('stock');
-        }
-    }
-
-    public function backendProduct($product) {
-        if ($this->getSettings('status')) {
-            $view = wa()->getView();
-            $view->assign('product', $product);
-            $html = $view->fetch('plugins/stock/templates/BackendProduct.html');
-            return array('edit_section_li' => $html);
-        }
-    }
-
-    public function frontendNav() {
-
-        if ($this->getSettings('status') && $this->getSettings('default_output')) {
-            return self::shortList();
-        }
-    }
-
-    public static function shortList() {
-        $plugin = self::getThisPlugin();
-        $html = '';
-        if ($plugin->getSettings('status')) {
+        if (!is_array($stock)) {
             $stock_model = new shopStockPluginModel();
-            $collection = new shopStockProductsCollection();
-            $products = array();
-            if ($collection->stockFilter()) {
-                $products = $collection->getProducts('*', 0, $plugin->getSettings('count'));
-                foreach ($products as &$product) {
-                    $stock = $stock_model->getByField('product_id', $product['id']);
-                    $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-                    $time = strtotime($stock['date_end']) - strtotime($now);
-                    $stock['time'] = $time;
-                    $product['stock'] = $stock;
-                }
-            }
-            $view = wa()->getView();
-            $view->assign('stock_products', $products);
-
-            $template_path = wa()->getDataPath('plugins/stock/templates/FrontendNav.html', false, 'shop', true);
-            if (!file_exists($template_path)) {
-                $template_path = wa()->getAppPath('plugins/stock/templates/FrontendNav.html', 'shop');
-            }
-            $html = $view->fetch($template_path);
+            $stock = $stock_model->getById($stock);
         }
-        waSystem::popActivePlugin();
-        return $html;
-    }
-
-    public static function stockInfo($product_id) {
-        $html = '';
-        $plugin = self::getThisPlugin();
-        if ($plugin->getSettings('status')) {
-            $stock_model = new shopStockPluginModel();
-            $stock = $stock_model->getActiveStockByProduct($product_id);
-            $view = wa()->getView();
+        if ($stock) {
             $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-            $time = strtotime($stock['date_end']) - strtotime($now);
+            $time = strtotime($stock['datetime_end']) - strtotime($now);
+            $view = wa()->getView();
+            $view->assign('settings', $app_settings_model->get(self::$plugin_id));
             $view->assign('stock', $stock);
             $view->assign('time', $time);
-            $template_path = wa()->getDataPath('plugins/stock/templates/StockInfo.html', false, 'shop', true);
+            $template_path = wa()->getDataPath('plugins/stock/templates/Stock.html', false, 'shop', true);
             if (!file_exists($template_path)) {
-                $template_path = wa()->getAppPath('plugins/stock/templates/StockInfo.html', 'shop');
-            }
-            $html = $view->fetch($template_path);
-        }
-        waSystem::popActivePlugin();
-        return $html;
-    }
-
-    public function frontendProduct($product) {
-
-        if ($this->getSettings('status') && $this->getSettings('frontend_product')) {
-            $stock_model = new shopStockPluginModel();
-            $stock = $stock_model->getActiveStockByProduct($product->id);
-            if ($stock) {
-                $view = wa()->getView();
-                $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-                $time = strtotime($stock['date_end']) - strtotime($now);
-                $view->assign('stock', $stock);
-                $view->assign('time', $time);
-
-                $template_path = wa()->getDataPath('plugins/stock/templates/FrontendProduct.html', false, 'shop', true);
-                if (!file_exists($template_path)) {
-                    $template_path = wa()->getAppPath('plugins/stock/templates/FrontendProduct.html', 'shop');
-                }
-                $html = $view->fetch($template_path);
-                $frontend_product_output = $this->getSettings('frontend_product_output');
-                return array($frontend_product_output => $html);
-            }
-        }
-    }
-
-    public function orderCalculateDiscount($params) {
-
-        if ($this->getSettings('status')) {
-            $stock_model = new shopStockPluginModel();
-            $discount = 0;
-            foreach ($params['order']['items'] as $item) {
-                $count = $item['quantity'];
-                $stock = $stock_model->getActiveStockByProduct($item['product']['id']);
-
-                if ($count < $stock['count']) {
-                    continue;
-                }
-
-                if ($stock['type'] == 'discount' && $stock['discount_type'] == 'percent_discount') {
-                    $percent_discount = $stock['percent_discount'];
-                    $total = shop_currency($item['price'] * $item['quantity'], $item['currency'], null, false);
-                    $discount += ceil($total * $percent_discount / 100);
-                } elseif ($stock['type'] == 'discount' && $stock['discount_type'] == 'new_price') {
-                    $total = shop_currency($item['price'] * $item['quantity'], $item['currency'], null, false);
-                    $new_total = shop_currency($stock['new_price'] * $item['quantity'], null, null, false);
-                    $discount += $total - $new_total;
-                } elseif ($stock['type'] == 'gift') {
-                    $cart_model = new shopCartItemsModel();
-                    $code = waRequest::cookie('shop_cart');
-                    if (!$code) {
-                        $code = md5(uniqid(time(), true));
-                        wa()->getResponse()->setCookie('shop_cart', $code, time() + 30 * 86400, null, '', false, true);
-                    }
-                    $sku_model = new shopProductSkusModel();
-                    $sku = $sku_model->getByField('sku', $stock['sku_gift']);
-                    $session = wa()->getStorage();
-
-                    $gift_quantity = floor($count / $stock['count']);
-
-                    $session_data = $session->read('stockplugin');
-                    $session_gift_count = isset($session_data[$sku['id']]) ? $session_data[$sku['id']] : 0;
-
-                    if (!$session_gift_count || $cart_model->countSku($code, $sku['id']) < $gift_quantity) {
-
-                        $add_quantity = $gift_quantity - $cart_model->countSku($code, $sku['id']);
-                        $data = array(
-                            'sku_id' => $sku['id'],
-                            'product_id' => $sku['product_id'],
-                            'quantity' => $add_quantity,
-                        );
-                        $this->addToCart($data);
-                        $session_data[$sku['id']] = $gift_quantity;
-                        $session->write('stockplugin', $session_data);
-                    }
-                    $product_model = new shopProductModel();
-                    $product = $product_model->getById($sku['product_id']);
-                    $discount += shop_currency($sku['price'] * $gift_quantity, $product['currency'], null, false);
-                }
-            }
-
-            if ($discount) {
-                return $discount;
-            }
-        }
-    }
-
-    public function orderActionCreate($params) {
-        if ($this->getSettings('status')) {
-            $session = wa()->getStorage();
-            $session->remove('stockplugin');
-        }
-    }
-
-    public function frontendCart() {
-        if ($this->getSettings('status')) {
-            $stocks = array();
-            $product_model = new shopProductModel();
-            $stock_model = new shopStockPluginModel();
-            $cart = new shopCart();
-            $items = $cart->items();
-            foreach ($items as $item) {
-                $count = $item['quantity'];
-                $stock = $stock_model->getActiveStockByProduct($item['product']['id']);
-                if (!$stock || $count < $stock['count']) {
-                    continue;
-                }
-                $stock['product'] = $product_model->getById($stock['product_id']);
-                $stocks[] = $stock;
-            }
-
-
-            $view = wa()->getView();
-            $view->assign('stocks', $stocks);
-            $view->assign('frontend_cart', $this->getSettings('frontend_cart'));
-            
-            $template_path = wa()->getDataPath('plugins/stock/templates/FrontendCart.html', false, 'shop', true);
-            if (!file_exists($template_path)) {
-                $template_path = wa()->getAppPath('plugins/stock/templates/FrontendCart.html', 'shop');
+                $template_path = wa()->getAppPath('plugins/stock/templates/Stock.html', 'shop');
             }
             $html = $view->fetch($template_path);
             return $html;
         }
     }
 
-    protected function addToCart($data) {
-        $cart_model = new shopCartItemsModel();
-        $code = waRequest::cookie('shop_cart');
-        if (!$code) {
-            $code = md5(uniqid(time(), true));
-            wa()->getResponse()->setCookie('shop_cart', $code, time() + 30 * 86400, null, '', false, true);
-        }
-
-
-        $sku_model = new shopProductSkusModel();
-        $product_model = new shopProductModel();
-        if (!isset($data['product_id'])) {
-            $sku = $sku_model->getById($data['sku_id']);
-            $product = $product_model->getById($sku['product_id']);
+    public static function getStockByProduct($product) {
+        if (!empty($product['id'])) {
+            $product_id = $product['id'];
         } else {
-            $product = $product_model->getById($data['product_id']);
-            if (isset($data['sku_id'])) {
-                $sku = $sku_model->getById($data['sku_id']);
+            $product_id = $product;
+        }
+        $stock_model = new shopStockPluginModel();
+        return $stock_model->getStockByProductID($product_id);
+    }
+
+    public static function getStockByCategory($category) {
+        if (!empty($category['id'])) {
+            $category_id = $category['id'];
+        } else {
+            $category_id = $category;
+        }
+        $stock_model = new shopStockPluginModel();
+        return $stock_model->getStockByCategoryID($category_id);
+    }
+
+    public function backendProducts($params) {
+        if ($this->getSettings('status')) {
+            $plugin_url = $this->getPluginStaticUrl();
+            $sidebar_top_li_html = <<<HTML
+<li id="s-stocks">
+<a href = "#/stockList/"><i class="icon16" style="background-image: url({$plugin_url}img/stock.png);"></i>Акции</a>
+<script type="text/javascript" src = "{$plugin_url}js/stock.js"></script>
+</li>
+
+<link href="{$plugin_url}css/jquery-ui/jquery-ui-timepicker-addon.min.css" rel="stylesheet" type="text/css" />  
+<script type="text/javascript" src="{$plugin_url}js/jquery-ui/jquery-ui-timepicker-addon.min.js"></script>
+HTML;
+            $lang = substr(wa()->getLocale(), 0, 2);
+            if ($lang == 'ru') {
+                $sidebar_top_li_html .= '<script type="text/javascript" src="' . $plugin_url . 'js/jquery-ui/i18n/jquery-ui-timepicker-ru.js"></script>';
+            }
+
+            $toolbar_organize_li_html = '<div style="display: none;" id="stock-dialog"></div><li data-action="stock"><a class="add-stock-products" href="#"><i class="icon16 add"></i>Добавить в акцию</a></li>';
+
+            return array(
+                'sidebar_top_li' => $sidebar_top_li_html,
+                'toolbar_organize_li' => $toolbar_organize_li_html
+            );
+        }
+    }
+
+    public function frontendHomepage() {
+        if ($this->getSettings('status')) {
+            $stock_model = new shopStockPluginModel();
+            $stocks = $stock_model->getActiveStocks();
+            $html = '';
+            foreach ($stocks as $stock) {
+                if ($stock['homepage']) {
+                    $html .= self::display($stock);
+                }
+            }
+            return $html;
+        }
+    }
+
+    public function frontendCart() {
+        if ($this->getSettings('status')) {
+            $cart = new shopCart();
+            $items = $cart->items();
+            $stock_model = new shopStockPluginModel();
+
+            $product_ids = array();
+            foreach ($items as $item) {
+                if ($stock = $stock_model->getStockByProductID($item['product_id'])) {
+                    if ($stock['type'] == 'gift' && $stock['gift_sku_id']) {
+                        $sku_model = new shopProductSkusModel();
+                        if ($sku = $sku_model->getById($stock['gift_sku_id'])) {
+                            $product_ids[] = $sku['product_id'];
+                        }
+                    }
+                }
+            }
+
+            $collection = new shopProductsCollection('id/' . implode(',', $product_ids));
+            $gift_products = $collection->getProducts('*', 0, null, true);
+            if ($gift_products) {
+                $view = wa()->getView();
+                $view->assign('include_template', $this->getSettings('cart_products_template'));
+                $view->assign('gift_products', $gift_products);
+                $template_path = wa()->getDataPath('plugins/stock/templates/FrontendCart.html', false, 'shop', true);
+                if (!file_exists($template_path)) {
+                    $template_path = wa()->getAppPath('plugins/stock/templates/FrontendCart.html', 'shop');
+                }
+                $html = $view->fetch($template_path);
+                return $html;
+            }
+        }
+    }
+
+    public function frontendProduct($product) {
+        if ($this->getSettings('status') && $this->getSettings('frontend_product_output')) {
+            $stock_model = new shopStockPluginModel();
+            if ($stock = $stock_model->getStockByProductID($product->id)) {
+                $html = self::display($stock);
+                return array($this->getSettings('frontend_product_output') => $html);
+            }
+        }
+    }
+
+    public function frontendCategory($category) {
+        if ($this->getSettings('status') && $this->getSettings('frontend_category_output')) {
+            $stock_model = new shopStockPluginModel();
+            if ($stock = $stock_model->getStockByCategoryID($category['id'])) {
+                $html = self::display($stock);
+                return $html;
+            }
+        }
+    }
+
+    public function frontendProducts(&$params) {
+        if ($this->getSettings('status') && !wa()->getStorage()->get('shop/stockplugin/frontendProductsOff')) {
+            if (!empty($params['products'])) {
+                $params['products'] = $this->prepareProducts($params['products']);
+            }
+            if (!empty($params['skus'])) {
+                $params['skus'] = $this->prepareSkus($params['skus']);
+            }
+        }
+    }
+
+    private function prepareProducts($products = array()) {
+        $stock_model = new shopStockPluginModel();
+        foreach ($products as &$product) {
+            if ($stock = $stock_model->getStockByProductID($product['id'])) {
+                $this->updatePrices($stock, $product);
+            }
+        }
+        unset($product);
+
+        return $products;
+    }
+
+    private function prepareSkus($skus = array()) {
+        $stock_model = new shopStockPluginModel();
+        foreach ($skus as &$sku) {
+            if ($stock = $stock_model->getStockByProductID($sku['product_id'])) {
+                $this->updatePrices($stock, $sku);
+            }
+        }
+        unset($sku);
+
+        return $skus;
+    }
+
+    private function updatePrices($stock, &$item) {
+        if ($stock['type'] == 'discount' && $stock['discount_value'] > 0 && isset($item['price'])) {
+            $old_price = $item['price'];
+            if ($stock['discount_type'] == 'percent') {
+                $item['price'] = $item['price'] * (100 - $stock['discount_value']) / 100.0;
+            } elseif ($stock['discount_type'] == 'absolute') {
+                $discount_value = $stock['discount_value'];
+                if (!empty($item['product_id'])) {
+                    $def_currency = wa('shop')->getConfig()->getCurrency(true);
+                    $product_model = new shopProductModel();
+                    $product = $product_model->getById($item['product_id']);
+                    $discount_value = shop_currency($discount_value, $def_currency, $product['currency'], false);
+                }
+                $item['price'] = $item['price'] - $discount_value;
+            } elseif ($stock['discount_type'] == 'price') {
+                $new_price = $stock['discount_value'];
+                if (!empty($item['product_id'])) {
+                    $def_currency = wa('shop')->getConfig()->getCurrency(true);
+                    $product_model = new shopProductModel();
+                    $product = $product_model->getById($item['product_id']);
+                    $new_price = shop_currency($new_price, $def_currency, $product['currency'], false);
+                }
+                $item['price'] = $new_price;
+            }
+
+            if (isset($item['compare_price']) && $item['compare_price'] == 0) {
+                $item['compare_price'] = $old_price;
+            }
+        }
+    }
+
+    public function orderActionCreate($params) {
+        if ($this->getSettings('status')) {
+            $order_id = $params['order_id'];
+            $order_model = new shopOrderModel();
+            $order_items_model = new shopOrderItemsModel();
+            $log_model = new shopOrderLogModel();
+
+            $order = $order_model->getById($order_id);
+            $order['contact'] = new waContact($params['contact_id']);
+            $order['items'] = $order_items_model->getItems($order_id);
+
+
+            $stock_model = new shopStockPluginModel();
+            foreach ($order['items'] as $item) {
+                if ($stock = $stock_model->getStockByProductID($item['product_id'])) {
+                    if ($stock['type'] == 'gift' && $stock['gift_sku_id']) {
+                        $sku_model = new shopProductSkusModel();
+                        if ($sku = $sku_model->getById($stock['gift_sku_id'])) {
+                            $product_model = new shopProductModel();
+                            $product = $product_model->getById($sku['product_id']);
+                            $add_item = array(
+                                'order_id' => $order_id,
+                                'name' => $product['name'] . ' (Подарок)',
+                                'product_id' => $product['id'],
+                                'sku_id' => $sku['id'],
+                                'sku_code' => $sku['sku'],
+                                'type' => 'product',
+                                'service_id' => null,
+                                'service_variant_id' => null,
+                                'price' => 0,
+                                'quantity' => $item['quantity'],
+                                'stock_id' => null,
+                            );
+                            $order['items'][] = $add_item;
+
+                            $name = $product['name'];
+
+                            $log_data = array(
+                                'action_id' => 'comment',
+                                'order_id' => $order_id,
+                                'before_state_id' => $order['state_id'],
+                                'after_state_id' => $order['state_id'],
+                                'text' => 'Плагин «<a target="_blank" href="?action=plugins#/stock/">Акции</a>»: '
+                                . 'К заказу добавлен подарок <a target="_blank" href="?action=products#/product/' . $product['id'] . '/">' . $name . '</a> '
+                                . 'согласно условию акции «<a target="_blank" href="?action=products#/stock/' . $stock['id'] . '/">' . $stock['name'] . '</a>»',
+                            );
+                            $log_model->add($log_data);
+                        }
+                    }
+                }
+            }
+
+            $order['discount'] = shopDiscounts::calculate($order);
+
+            $workflow = new shopWorkflow();
+            $workflow->getActionById('edit')->run($order);
+        }
+    }
+
+    public function routing($route = array()) {
+        if ($this->getSettings('status')) {
+            $routing = array();
+            if ($this->getSettings('stock_page')) {
+                $routing[$this->getSettings('page_url')] = 'frontend/stockList';
+                $routing[$this->getSettings('page_url') . '<stock>/'] = 'frontend/stock';
+            }
+
+
+            return $routing;
+        }
+    }
+
+    public function productsCollection($params) {
+        if ($this->getSettings('status')) {
+            $collection = $params['collection'];
+            $hash = $collection->getHash();
+            if ($hash[0] !== 'stock') {
+                return false;
+            }
+            $stock_products_model = new shopStockProductsPluginModel();
+            $stock_products = $stock_products_model->getByField('stock_id', $hash[1], true);
+            $product_ids = array();
+            $product_types = array();
+            foreach ($stock_products as $stock_product) {
+                switch ($stock_product['type']) {
+                    case 'product':
+                        $product_ids[] = $stock_products_model->escape($stock_product['value']);
+                        break;
+                    case 'category':
+                        $category_collection = new shopProductsCollection('category/' . $stock_product['value']);
+                        $products = $category_collection->getProducts('*', 0, null, true);
+                        if ($products) {
+                            $product_ids = array_merge($product_ids, array_keys($products));
+                        }
+                        break;
+                    case 'type':
+                        $product_types[] = $stock_products_model->escape($stock_product['value']);
+                        break;
+                    case 'set':
+                        $set_collection = new shopProductsCollection('set/' . $stock_product['value']);
+                        $products = $set_collection->getProducts('*', 0, null, true);
+                        if ($products) {
+                            $product_ids = array_merge($product_ids, array_keys($products));
+                        }
+                        break;
+                }
+            }
+            $where = array();
+            if ($product_ids) {
+                $where[] = "`id` IN (" . implode(',', $product_ids) . ")";
+            }
+            if ($product_types) {
+                $where[] = "`type_id` IN (" . implode(',', $product_types) . ")";
+            }
+            if ($where) {
+                $collection->addWhere(implode(" OR ", $where));
             } else {
-                if (isset($data['features'])) {
-                    $product_features_model = new shopProductFeaturesModel();
-                    $sku_id = $product_features_model->getSkuByFeatures($product['id'], $data['features']);
-                    if ($sku_id) {
-                        $sku = $sku_model->getById($sku_id);
-                    } else {
-                        $sku = null;
-                    }
-                } else {
-                    $sku = $sku_model->getById($product['sku_id']);
-                    if (!$sku['available']) {
-                        $sku = $sku_model->getByField(array('product_id' => $product['id'], 'available' => 1));
-                    }
-
-                    if (!$sku) {
-                        return false;
-                    }
-                }
+                $collection->addWhere("`id` IN (NULL)");
             }
-        }
-
-        $quantity = $data['quantity'];
-
-        if ($product && $sku) {
-            // check quantity
-            if (!wa()->getSetting('ignore_stock_count')) {
-                $c = $cart_model->countSku($code, $sku['id']);
-                if ($sku['count'] !== null && $c + $quantity > $sku['count']) {
-                    $quantity = $sku['count'] - $c;
-                    if (!$quantity) {
-                        return false;
-                    } else {
-                        return false;
-                    }
-                }
-            }
-            $services = array();
-            $item_id = null;
-            $item = $cart_model->getItemByProductAndServices($code, $product['id'], $sku['id'], $services);
-            if ($item) {
-                $item_id = $item['id'];
-                $cart_model->updateById($item_id, array('quantity' => $item['quantity'] + $quantity));
-                if ($services) {
-                    $cart_model->updateByField('parent_id', $item_id, array('quantity' => $item['quantity'] + $quantity));
-                }
-            }
-            if (!$item_id) {
-                $data = array(
-                    'code' => $code,
-                    'contact_id' => wa()->getUser()->getId(),
-                    'product_id' => $product['id'],
-                    'sku_id' => $sku['id'],
-                    'create_datetime' => date('Y-m-d H:i:s'),
-                    'quantity' => $quantity
-                );
-                $item_id = $cart_model->insert($data + array('type' => 'product'));
-                if ($services) {
-                    foreach ($services as $service_id => $variant_id) {
-                        $data_service = array(
-                            'service_id' => $service_id,
-                            'service_variant_id' => $variant_id,
-                            'type' => 'service',
-                            'parent_id' => $item_id
-                        );
-                        $cart_model->insert($data + $data_service);
-                    }
-                }
-            }
-            // update shop cart session data
-            wa()->getStorage()->remove('shop/cart');
             return true;
-        } else {
-            return false;
+        }
+    }
+
+    public function sitemap($route) {
+        if ($this->getSettings('status') && $this->getSettings('stock_page')) {
+            $urls = array();
+
+            $urls[] = array(
+                'loc' => wa()->getRouteUrl('shop/frontend/stockList', true),
+                'changefreq' => waSitemapConfig::CHANGE_MONTHLY,
+                'priority' => 0.2
+            );
+            $stock_model = new shopStockPluginModel();
+            $stocks = $stock_model->getActiveStocks();
+            foreach ($stocks as $stock) {
+                $urls[] = array(
+                    'loc' => wa()->getRouteUrl('shop/frontend/stock', array('stock' => $stock['page_url']), true),
+                    'changefreq' => waSitemapConfig::CHANGE_MONTHLY,
+                    'priority' => 0.2
+                );
+            }
+            return $urls;
         }
     }
 

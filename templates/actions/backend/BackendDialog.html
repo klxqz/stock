@@ -1,0 +1,45 @@
+<div class="dialog-background"></div>
+<form id="stock-form" method="post" action="?plugin=stock&action=addProducts">
+    {$wa->csrf()}
+    <div class="dialog-window">
+        <div class="dialog-content">
+            <div class="dialog-content-indent">
+                <h1>Акции</h1>
+                {if $stocks}
+                    <ul class="menu-v">
+
+                        {foreach $stocks as $stock}
+                            <li>
+                                <label>
+                                    <input type="radio" value="{$stock.id}" name="stock_id">
+                                    <span class="name">{$stock.name|escape}</span>
+                                </label>
+                            </li>
+                        {/foreach}
+
+                    </ul>
+                {else}
+                    <p>Не создано ни одной акции</p>
+                    <p><a href="?action=products#/stock/add/"><i class="icon16 add"></i>Добавить акцию</a></p>
+                {/if}
+            </div>
+        </div>
+        <div class="dialog-buttons">
+            <div class="dialog-buttons-gradient">
+                <input type="submit" value="Добавить" class="button green">
+                <i class="icon16 loading" style="display:none;"></i>
+                <a class="cancel" href="#">Отмена</a>
+                <a style="display:none;" class="close" href="#">Закрыть</a>
+                <span style="display:none;" class="stock-response"></span>
+            </div>
+        </div>
+    </div>
+</form>        
+<script type="text/javascript">
+    $(function () {
+        $('.dialog-buttons .close').click(function () {
+            $('#stock-dialog').trigger('close');
+            return false;
+        });
+    });
+</script>

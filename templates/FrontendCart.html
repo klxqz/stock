@@ -1,27 +1,12 @@
-<script>
-    $(function() {
-        var cart_total = $('.cart-total').html();
-        setInterval(function() {
-            if (cart_total != $('.cart-total').html()) {
-                location.reload();
-                cart_total = $('.cart-total').html();
-            }
-        }, 500);
-    });
-</script>
-<style>
-    #stock_cart_block{
-        color:red;
-        font-weight: bold;
-    }
-</style>
-
-{if $frontend_cart}
-<div id="stock_cart_block">
-    {foreach $stocks as $stock}
-    <div class="stock_cart_item">
-        Акция для товара {$stock.product.name}. {$stock.description}
-    </div>
-    {/foreach}
+<div class="cart-stock-plugin">
+    <h3>Подарки к заказу</h3>
+    <p>
+        После оформления заказа будут добавлены следующие подарки:
+    </p>
+    {$path = "`$wa_active_theme_path`/`$include_template`"}
+    {if file_exists($path)}
+        {include file=$path products=$gift_products}
+    {else}
+        <strong>Ошибка подключения шаблона: {$path}</strong>
+    {/if}
 </div>
-{/if}

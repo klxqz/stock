@@ -1,107 +1,111 @@
-<script type="text/javascript" src="{$wa_app_static_url}plugins/stock/js/stock.js"></script>
+<div class="block double-padded">
+    <h1>
+        Акции
+        <a target="_blank" href="{$frontend_url}{$page_url}">
+            {$frontend_url}{$page_url}
+            <i class="icon10 new-window"></i>
+        </a>
+    </h1>
+    <ul class="menu-h">
+        <li><a href="#/stock/add/"><i class="icon16 add"></i>Новая акция</a></li>
+        <li><a href="?action=plugins#/stock/"><i class="icon16 ss settings-bw"></i>Настройки плагина</a></li>
+    </ul>
 
-<link rel="stylesheet" href="{$wa_url}wa-content/css/jquery-ui/base/jquery.ui.datepicker.css">
-<link rel="stylesheet" href="{$wa_url}wa-content/css/jquery-ui/base/jquery.ui.theme.css">
-<script type="text/javascript" src="{$wa_url}wa-content/js/jquery-ui/jquery.ui.datepicker.min.js"></script>
-<script type="text/javascript" src="{$wa_url}wa-content/js/jquery-ui/i18n/jquery.ui.datepicker-ru_RU.js"></script>
-
-
-<script>
-    $(function() {
-        $(".date").datepicker({
-            dateFormat: 'yy-mm-dd',
-        });
-    });
-</script>
-
-<input type="hidden" name="shop_stock[id]" value="{$stock.id}" />
-
-<input type="hidden" name="shop_stock[product_id]" value="{$product.id}" />
-
-<div class="field">
-    <div class="name">Название акции</div>
-    <div class="value"><input type="text" name="shop_stock[name]" value="{$stock.name|escape}" class="long bold"></div>
-</div>
-
-
-
-<div class="field">
-    <div class="name">Описание(html)</div>
-    <div class="value">
-        <textarea name="shop_stock[description]">{$stock.description|escape}</textarea>
-    </div>
-</div>
-
-<div class="field">
-    <div class="name">Дата начала акции</div>
-    <div class="value">
-        <input class="date" type="text" name="shop_stock[date_begin]" value="{$stock.date_begin|escape}">
-    </div>
-</div>
-
-<div class="field">
-    <div class="name">Дата завершения акции</div>
-    <div class="value">
-        <input class="date" type="text" name="shop_stock[date_end]" value="{$stock.date_end|escape}">
-
-    </div>
-</div>
-
-<div class="field">
-    <div class="name">Количество товаров</div>
-    <div class="value">
-        <input class="short numerical" type="text" name="shop_stock[count]" placeholder="0" value="{$stock.count|escape}">
-        <div class="hint">Количество аукционного товара, которое должен положить в корзину покупатель для активации акции</div>
-    </div>
-</div>
-
-
-
-<div class="field">
-    <div class="name">Тип акции</div>
-    <div class="value">
-        <select name="shop_stock[type]">
-            <option {if $stock.type=='discount'}selected="selected"{/if} value="discount">Скидка</option>
-            <option {if $stock.type=='gift'}selected="selected"{/if} value="gift">Подарок</option>
-        </select>
-    </div>
-</div>
-
-<div class="field-group stock_type" id="type_discount">
-    <div class="field">
-        <div class="name">Тип скидки</div>
-        <div class="value">
-            <input type="radio" {if $stock.discount_type=='percent_discount'  || !$stock.discount_type}checked="checked"{/if} name="shop_stock[discount_type]" value="percent_discount" /> - процентная скидка
-                   <input type="radio" {if $stock.discount_type=='new_price'}checked="checked"{/if} name="shop_stock[discount_type]" value="new_price" /> - новая цена
-        </div>
-    </div>
-
-    <div id="option_percent_discount" class="field discount_type_option">
-        <div class="name">Процентная скидка</div>
-        <div class="value">
-            <input class="short bold numerical" type="text" name="shop_stock[percent_discount]" placeholder="0" value="{$stock.percent_discount|escape}"><span>%</span>
-        </div>
-    </div>
-
-    <div id="option_new_price" class="field discount_type_option">
-        <div class="name">Новая цена</div>
-        <div class="value">
-            <input class="short bold numerical" type="text" name="shop_stock[new_price]" placeholder="0" value="{(float)$stock.new_price|escape}"><span>{$def_currency}</span>
-        </div>
-    </div>
-</div>
-
-<div  class="field stock_type" id="type_gift">
-    <div class="name">Артикул подарочного товара</div>
-    <div class="value">
-        <input class="short" placeholder="Артикул" type="text" name="shop_stock[sku_gift]" value="{$stock.sku_gift|escape}">
-    </div>
+    <table class="zebra">
+        <thead>
+            <tr>
+                <th>Статус</th>
+                <th>Название</th>
+                <th>Начало</th>
+                <th>Окончание</th>
+                <th>Акция</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {foreach $stocks as $stock}
+                <tr>
+                    <td>
+                        {if $stock.enabled}
+                            <i class="icon10 status-green"></i>
+                        {else}
+                            <i class="icon10 status-red"></i>
+                        {/if}
+                    </td>
+                    <td>
+                        <a href="#/stock/{$stock.id}/">
+                            {$stock.name|default:'Без названия'|escape}
+                        </a>
+                    </td>
+                    <td>
+                        {$stock.datetime_begin|date_format:"d.m.Y H:i"|escape}
+                    </td>
+                    <td>
+                        {$stock.datetime_end|date_format:"d.m.Y H:i"|escape}
+                    </td>
+                    <td>
+                        {if $stock.type == 'discount'}
+                            {if $stock.discount_type == 'percent'}
+                                Скидка процентная: {(float)$stock.discount_value}%
+                            {elseif $stock.discount_type == 'absolute'}
+                                Скидка в валюте: {shop_currency($stock.discount_value)}
+                            {elseif $stock.discount_type == 'price'}
+                                Новая цена: {shop_currency($stock.discount_value)}
+                            {/if}
+                        {elseif $stock.type == 'gift'}
+                            Подарок
+                            {if !empty($stock.gift_sku_id) && !empty($stock.gift_product)}
+                                {$gift_product = $stock.gift_product}
+                                <a style="display: inline;" href="?action=products#/product/{$gift_product.id}/" target="_blank">
+                                    <strong>
+                                        {$gift_product.name|escape}
+                                    </strong>
+                                    {if $gift_product.sku.sku && $gift_product.sku.name}
+                                        <i style="color: gray;">(<strong>{$gift_product.sku.sku|escape}</strong>: {$gift_product.sku.name|escape})</i>
+                                    {elseif $gift_product.sku.sku}
+                                        <i style="color: gray;">({$gift_product.sku.sku|escape})</i>
+                                    {elseif $gift_product.sku.name}
+                                        <i style="color: gray;">({$gift_product.sku.name|escape})</i>
+                                    {/if}
+                                </a>
+                            {else}
+                                не определен
+                            {/if}
+                        {/if}
+                    </td>
+                    <td>
+                        <a href="#" class="stock-delete" data-id="{$stock.id|default:0}"><i class="icon16 delete"></i></a>
+                    </td>
+                </tr>
+            {foreachelse}
+                <tr>
+                    <td colspan="6">Нет ни одной акции</td>
+                </tr>
+            {/foreach}
+        </tbody>
+    </table>
 </div>
 
 <script type="text/javascript">
-    $.product_stock.init({
-        container: '.s-product-form.stock',
-        counter: '#s-product-edit-menu li.services span.hint',
-        product_id: {$product.id},
+    $(function () {
+        $('.stock-delete').click(function () {
+            var self = $(this);
+            $.ajax({
+                type: 'POST',
+                url: '?plugin=stock&action=delete',
+                data: {
+                    id: $(this).data('id')
+                },
+                dataType: 'json',
+                success: function (data, textStatus, jqXHR) {
+                    self.closest('tr').remove();
+                },
+                error: function (jqXHR, errorText) {
+                    alert(jqXHR.responseText);
+                }
+            });
+
+            return false;
+        });
     });
 </script>

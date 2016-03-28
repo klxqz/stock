@@ -1,0 +1,49 @@
+<script type="text/javascript">
+    if (typeof (Countdown) == 'undefined') {
+    document.write('<scr' + 'ipt src="{$wa_app_static_url}plugins/stock/js/countdown/countdown.js" type="text/javascript"></sc' + 'ript>');
+    }
+</script>
+<div class="stock_cont">
+    <div class="stock_block">
+        <div class="countdown_block">
+            <script type="text/javascript">
+                if (typeof (stock_{$stock.id}) == 'undefined') {
+                    var stock_{$stock.id} = new Countdown({
+                        time        : {$time},
+                        style       : '{$settings.countdown_style|default:'boring'}',
+                        hideLabels  : {$settings.countdown_hide_labels|default:'false'},
+                        hideLine    : {$settings.countdown_hide_line|default:'false'},
+                        labelText: {
+                            second  : "{$settings.countdown_second_text|default:'Секунды'|escape}",
+                            minute  : "{$settings.countdown_minute_text|default:'Минуты'|escape}",
+                            hour    : "{$settings.countdown_hour_text|default:'Часы'|escape}",
+                            day     : "{$settings.countdown_day_text|default:'Дни'|escape}",
+                            month   : "{$settings.countdown_month_text|default:'Месяцы'|escape}",
+                            year    : "{$settings.countdown_year_text|default:'Годы'|escape}"
+                        },
+                        {if $settings.countdown_style|default:'boring' == 'boring'}
+                        numbers: {
+                            font    : "Arial",
+                            color   : "{$settings.countdown_numbers_color|default:'#FFFFFF'|escape}",
+                            bkgd    : "{$settings.countdown_numbers_bkgd|default:'#365D8B'|escape}",
+                            rounded : 0.15 // percentage of size 
+                        },
+                        {/if}
+                        labels: {
+                            font        : "Arial",
+                            color       : "{$settings.countdown_labels_color|default:'#000000'|escape}",
+                            offset      : 0, // Number of pixels to push the labels down away from numbers.
+                            textScale   : {$settings.countdown_labels_size|default:'0.7'|escape}, // Percentage of size
+                            weight      : "normal" // < - no comma on last item!
+                        },
+                        rangeHi: "{$settings.countdown_range_hi}"
+                        {if !empty($settings.countdown_width)}, width: {$settings.countdown_width|default:200|escape}{/if}
+                        {if !empty($settings.countdown_height)}, height: {$settings.countdown_height|default:30|escape}{/if}
+                    });
+                }
+            </script>
+        </div>
+
+        <div class="stock_content">{$stock.page_content}</div>
+    </div>
+</div>

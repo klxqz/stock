@@ -1,0 +1,404 @@
+<script type="text/javascript" src="{$wa_url}wa-content/js/ace/ace.js"></script>
+<script type="text/javascript" src="{$wa_url}wa-content/js/elrte/elrte.min.js"></script>
+<script type="text/javascript" src="{$wa_url}wa-content/js/elrte/elrte-wa.js"></script>
+{if $lang != 'en'}
+    <script type="text/javascript" src="{$wa_url}wa-content/js/elrte/i18n/elrte.{$lang}.js"></script>
+{/if}
+<script type="text/javascript" src="{$wa_url}wa-content/js/jquery-wa/wa.elrte.ace.js"></script>
+<link type="text/css" rel="stylesheet" href="{$wa_url}wa-content/js/redactor/redactor.css">
+<script src="{$wa_url}wa-content/js/redactor/redactor.min.js"></script>
+{if $lang!='en'}<script src="{$wa_url}wa-content/js/redactor/{$lang}.js"></script>{/if}
+<script src="{$wa_url}wa-content/js/jquery-wa/editor.js?v{$wa->version()}"></script>
+<style>
+    #stock-edit-form .fields{
+        float: none;
+    }
+</style>
+
+<div class="block double-padded">
+    <h1>
+        <a href="#/stockList/" class="back">&LeftArrow; Назад</a>
+        {if !empty($stock)}
+            {$stock.name|default:'Без названия'|escape}
+        {else}
+            Новая акция
+        {/if}
+        <a href="#" class="stock-delete" data-id="{$stock.id|default:0}"><i class="icon16 delete"></i></a>
+    </h1>
+
+    <form id="stock-edit-form" enctype="multipart/form-data" method="post" action="?plugin=stock&action=save">
+        {$wa->csrf()}
+        <input type="hidden" name="stock[id]" value="{$stock.id|default:0}">
+        {if !empty($stock.id)}
+            <p class="hint"><strong>{ldelim}$products = $wa->shop->product("stock/{$stock.id}"){rdelim}</strong> - код получения списка товаров акции</p>
+            <p class="hint"><strong>{ldelim}shopStockPlugin::display({$stock.id}){rdelim}</strong> - хелпер вывода акции в произвольном месте</p>
+        {/if}
+
+        <div  class="fields form">   
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">Статус</div>
+                    <div class="value no-shift s-ibutton-checkbox">
+                        <input type="hidden" name="stock[enabled]" value="0">
+                        <input type="checkbox" id="ibutton-status" name="stock[enabled]" value="1"{if $stock.enabled|default:1} checked="checked"{/if}>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">Название акции</div>
+                    <div class="value">
+                        <input class="long" type="text" name="stock[name]" value="{$stock.name|default:''|escape}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <div class="field description">
+                    <div class="name">Описание</div>
+                    <div class="value">
+                        <i class="icon16 loading"></i>
+                        <div class="s-editor-core-wrapper wa-editor-core-wrapper" style="display:none;">
+                            <ul class="wa-editor-wysiwyg-html-toggle s-wysiwyg-html-toggle">
+                                <li class="selected"><a class="wysiwyg" href="#">[s`WYSIWYG`]</a></li>
+                                <li><a class="html" href="#">HTML</a></li>
+                            </ul>
+                            <div>
+                                <textarea style="display:none" id="stock-description-content" name="stock[description]">{$stock.description|default:''|escape}</textarea>
+                                <div class="ace">
+                                    <div id="wa-ace-editor-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">Показывать на главной</div>
+                    <div class="value">
+                        <input type="hidden" name="stock[homepage]" value="0">
+                        <input type="checkbox" name="stock[homepage]" value="1"{if $stock.homepage|default:'0'} checked="checked"{/if}>
+                        <p class="hint">Для отображения акции используется хук <strong>frontend_homepage</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">Время начала акции</div>
+                    <div class="value">
+                        <input class="long datetimepicker" type="text" name="stock[datetime_begin]" value="{$stock.datetime_begin|default:time()|date_format:"d.m.Y H:i"|escape}">
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">Время завершения акции</div>
+                    <div class="value">
+                        <input class="long datetimepicker" type="text" name="stock[datetime_end]" value="{$stock.datetime_end|default:(time()+86400)|date_format:"d.m.Y H:i"|escape}">
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">Тип акции</div>
+                    <div class="value">
+                        <input type="radio" name="stock[type]" value="discount"{if $stock.type|default:"discount" == "discount"} checked="checked"{/if}/> - Скидка<br/>
+                        <input type="radio" name="stock[type]" value="gift"{if $stock.type|default:"discount" == "gift"} checked="checked"{/if}/> - Подарок<br/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-group stock-type-field stock-type-discount">
+                <div class="field">
+                    <div class="name">Тип скидки</div>
+                    <div class="value">
+                        <input type="radio" name="stock[discount_type]" value="percent"{if $stock.discount_type|default:"percent" == "percent"} checked="checked"{/if}/> - Скидка процентная<br/>
+                        <input type="radio" name="stock[discount_type]" value="absolute"{if $stock.discount_type|default:"percent" == "absolute"} checked="checked"{/if}/> - Скидка в валюте<br/>
+                        <input type="radio" name="stock[discount_type]" value="price"{if $stock.discount_type|default:"percent" == "price"} checked="checked"{/if}/> - Новая цена<br/>
+                    </div>
+                </div>
+
+                <div class="field discount-type-field discount-type-percent">
+                    <div class="name">Скидка процентная</div>
+                    <div class="value">
+                        <input class="short bold numerical" type="text" name="stock[discount_value]" placeholder="0" value="{if $stock.discount_type|default:"percent" == "percent"}{(float)$stock.discount_value|default:0|escape}{else}0{/if}"><span>%</span>
+                    </div>
+                </div>
+                <div class="field discount-type-field discount-type-absolute">
+                    <div class="name">Скидка в валюте</div>
+                    <div class="value">
+                        <input class="short bold numerical" type="text" name="stock[discount_value]" placeholder="0" value="{if $stock.discount_type|default:"percent" == "absolute"}{(float)$stock.discount_value|default:0|escape}{else}0{/if}"><span>{$def_currency}</span>
+                    </div>
+                </div>
+
+                <div class="field discount-type-field discount-type-price">
+                    <div class="name">Новая цена</div>
+                    <div class="value">
+                        <input class="short bold numerical" type="text" name="stock[discount_value]" placeholder="0" value="{if $stock.discount_type|default:"percent" == "price"}{(float)$stock.discount_value|default:0|escape}{else}0{/if}"><span>{$def_currency}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="field-group stock-type-field stock-type-gift">
+                <div  class="field">
+                    <div class="name">Подарочный товар</div>
+                    <div class="value">
+                        <input type="hidden" name="stock[gift_sku_id]" value="{$stock.gift_sku_id|default:'0'|escape}">
+                        <input id="gift-search" class="long" placeholder="Артикул или название" type="text" >
+                        {if !empty($gift_product)}
+                            <a href="?action=products#/product/{$gift_product.id}/" target="_blank">
+                                <strong>
+                                    {$gift_product.name|escape}
+                                </strong>
+                                {if $gift_product.sku.sku && $gift_product.sku.name}
+                                    <i style="color: gray;">(<strong>{$gift_product.sku.sku|escape}</strong>: {$gift_product.sku.name|escape})</i>
+                                {elseif $gift_product.sku.sku}
+                                    <i style="color: gray;">({$gift_product.sku.sku|escape})</i>
+                                {elseif $gift_product.sku.name}
+                                    <i style="color: gray;">({$gift_product.sku.name|escape})</i>
+                                {/if}
+                            </a>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">
+                        Выбрать товары 
+                    </div>
+
+                    <div class="value">
+                        <table class="zebra" id="stock-products-table" style="width: 580px; margin-bottom: 20px;">
+                            <thead>
+                                <tr>
+                                    <th>Товары участвующие в акции</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {if !empty($stock_products)}
+                                    {foreach $stock_products as $stock_product}
+                                        <tr>
+                                            <td data-id="{$stock_product.id|escape}" data-type="{$stock_product.type|escape}" data-value="{$stock_product.value|escape}">
+                                                <input type="hidden" name="stock_products[id][]" value="{$stock_product.id|escape}" />
+                                                <input type="hidden" name="stock_products[type][]" value="{$stock_product.type|escape}" />
+                                                <input type="hidden" name="stock_products[value][]" value="{$stock_product.value|escape}" />
+
+                                                {if $stock_product.type == 'product'}
+                                                    {$url = "?action=products#/product/`$stock_product.value`/"}
+                                                    {$icon = 'folders'}
+                                                    {$type = 'Товар'}
+                                                {elseif $stock_product.type == 'set'}
+                                                    {$url = "?action=products#/products/set_id=`$stock_product.value`"}
+                                                    {$icon = 'ss set'}
+                                                    {$type = 'Список'}
+                                                {elseif $stock_product.type == 'type'}
+                                                    {$url = "?action=products#/products/type_id=`$stock_product.value`"}
+                                                    {$icon = 'ss pt box'}
+                                                    {$type = 'Тип товаров'}
+                                                {elseif $stock_product.type == 'category'}
+                                                    {$url = "?action=products#/products/category_id=`$stock_product.value`"}
+                                                    {$icon = 'folder'}
+                                                    {$type = 'Категория'}
+                                                {/if}
+
+                                                <a class="float-left" href="{$url}" target="_blank">
+                                                    <i class="icon16 {$icon}"></i>
+                                                    {$type}
+                                                    <strong>{$stock_product.name|escape}</strong>
+                                                </a>
+                                                <a class="delete-stock-products-button float-right" href="#"><i class="icon16 delete"></i></a>
+                                            </td>
+                                        </tr>
+                                    {/foreach}
+                                {/if}
+                            </tbody>
+                        </table>
+
+                        <div class="sidebar left200px">
+                            <ul class="menu-v">
+                                <li>
+                                    <label class="black"><i class="icon16 ss set"></i><input type="radio" value="set" name="hash"> Списки</label>
+                                </li>
+                                <li>
+                                    <label class="black"><i class="icon16 folder"></i><input type="radio" value="categories" name="hash"> Категории</label>
+                                </li>
+                                <li>
+                                    <label class="black"><i class="icon16 ss pt box"></i><input type="radio" value="type" name="hash"> Типы товаров</label>
+                                </li>
+                                <li>
+                                    <label class="black"><i class="icon16 folders"></i><input type="radio" value="product" name="hash"> Товары</label>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="value js-hash-values js-hash-set" style="width: 400px;">
+                            <div class="bordered-left" style="padding-left: 20px;">
+                                <ul class="menu-v with-icons">
+                                    {foreach $sets as $set}
+                                        <li>
+                                            <label title="{$set.id}">
+                                                <i class="icon16 {if $set.type == shopSetModel::TYPE_DYNAMIC}funnel{else}ss set{/if}"></i>
+                                                {$set.name|escape}
+                                                <a class="add-stock-products-button float-right" href="#" data-type="set" data-id="{$set.id}" data-name="{$set.name|escape}"><i class="icon16 add"></i></a>
+                                            </label>
+                                        </li>
+                                    {/foreach}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="value js-hash-values js-hash-categories" style="width: 400px;">
+                            <div class="bordered-left" style="padding-left: 20px;">
+                                {include file="./include.categories.html" categories=$categories}
+                                {*wa_print_tree tree=$categories elem='<label><i class="icon16 folder"></i> :name <a class="add-stock-products-button float-right" href="#" data-type="category" data-id=":id" data-name=""><i class="icon16 add"></i></a></label>' class="menu-v with-icons"*}
+                            </div>
+                        </div>
+                        <div class="value js-hash-values js-hash-type" style="width: 400px;">
+                            <div class="bordered-left" style="padding-left: 20px;">
+                                <ul class="menu-v with-icons">
+                                    {foreach $types as $type}
+                                        {if $type.count}
+                                            <li>
+                                                <label>
+                                                    {shopHelper::getIcon($type.icon)}
+                                                    {$type.name|escape}
+                                                    <a class="add-stock-products-button float-right" href="#" data-type="type" data-id="{$type.id|escape}" data-name="{$type.name|escape}"><i class="icon16 add"></i></a>
+                                                </label>
+                                            </li>
+                                        {/if}
+                                    {/foreach}
+                                </ul>
+                                {if !empty($hints.type)}<br/><span class="small">{$hints.type}</span>{/if}
+                            </div>
+                        </div>
+                        <div class="value js-hash-values js-hash-product">
+                            <div class="bordered-left" style="padding-left: 20px;">
+                                <p>Введите название товара:</p>
+                                <input class="long" id="products-search" type="text" />
+                                <a class="add-stock-products-button" href="#" data-type="product" data-id="" data-name=""><i class="icon16 add"></i></a>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="clear-left"></div>
+                </div>
+            </div>
+
+            <div class="stock-page-settings">
+                <div class="field-group">
+                    <h2>Настройки страницы акции</h2>
+                    <div class="field">
+                        <div class="name">
+                            Название страницы
+                        </div>
+                        <div class="value">
+                            <input class="long" type="text" name="stock[page_name]" value="{$stock.page_name|default:''|escape}" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="name">
+                            URL страницы
+                        </div>
+                        <div class="value">
+                            <input class="long" type="text" name="stock[page_url]" value="{$stock.page_url|default:''|escape}" />
+                            {if !empty($stock.id)}
+                                <a class="stock-frontend-url" target="_blank" href="{$frontend_url}{$page_url}{$stock.page_url|default:''|escape}">
+                                    {$frontend_url}{$page_url}{$stock.page_url|default:''|escape}
+                                    <i class="icon10 new-window"></i>
+                                </a>
+                            {/if}
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="name">
+                            Заголовок страницы &lt;title&gt;
+                        </div>
+                        <div class="value">
+                            <input class="long" type="text" name="stock[page_title]" value="{$stock.page_title|default:''|escape}" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="name">
+                            Meta keywords
+                        </div>
+                        <div class="value">
+                            <input class="long" type="text" name="stock[meta_keywords]" value="{$stock.meta_keywords|default:''|escape}" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="name">
+                            Meta description
+                        </div>
+                        <div class="value">
+                            <textarea name="stock[meta_description]">{$stock.meta_description|default:''|escape}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="field description">
+                        <div class="name">Текст</div>
+                        <div class="value">
+                            <i class="icon16 loading"></i>
+                            <div class="s-editor-core-wrapper wa-editor-core-wrapper" style="display:none;">
+                                <ul class="wa-editor-wysiwyg-html-toggle s-wysiwyg-html-toggle">
+                                    <li class="selected"><a class="wysiwyg" href="#">[s`WYSIWYG`]</a></li>
+                                    <li><a class="html" href="#">HTML</a></li>
+                                </ul>
+                                <div>
+                                    <textarea style="display:none" id="stock-page-content" name="stock[page_content]">{$stock.page_content|default:''|escape}</textarea>
+                                    <div class="ace">
+                                        <div id="wa-ace-editor-container"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <div class="field">
+                    <div class="value">
+                        <input id="s-stock-save-button" type="submit" class="button green" value="Сохранить" /> или
+                        <a href="#/stockList/">Отменить</a>
+                        <span id="stock-form-status" style="padding-left: 20px">
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+{literal}
+    <script id="stock-product-tmpl" type="text/x-jquery-tmpl">
+        <tr data-id="" data-type="${type}" data-value="${value}">
+        <td>
+        <input type="hidden" name="stock_products[id][]" value="" />
+        <input type="hidden" name="stock_products[type][]" value="${type}" />
+        <input type="hidden" name="stock_products[value][]" value="${value}" />
+
+        <a class="float-left" href="${url}" target="_blank">
+        <i class="icon16 ${icon}"></i>
+        ${type_name} <strong>${name}</strong>
+        </a>
+        <a class="delete-stock-products-button float-right" href="#"><i class="icon16 delete"></i></a>
+        </td>
+        </tr>
+    </script>
+{/literal}
+<script type="text/javascript">
+    var wa_app = '{$wa_url}';
+    var wa_url = '{$wa_url}';
+    var wa_lang = '{$lang}';
+    var frontend_url = '{$frontend_url}';
+    var page_url = '{$page_url}';
+</script>
+<script type="text/javascript" src="{$wa_app_static_url}plugins/stock/js/backend_stock.js"></script>
