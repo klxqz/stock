@@ -76,6 +76,53 @@
                 </div>
             </div>
 
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">Наклейка</div>
+                    <div class="value">
+                        <ul class="menu-v with-icons">
+                            <li>
+                                <label>
+                                    <i class="icon16 ss new"></i>
+                                    <input type="radio" name="stock[badge]" value="new"{if $stock.badge|default:"" == "new"} checked="checked"{/if}>
+                                    New!
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <i class="icon16 ss bestseller"></i>
+                                    <input type="radio" name="stock[badge]" value="bestseller"{if $stock.badge|default:"" == "bestseller"} checked="checked"{/if}>
+                                    Хит!
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <i class="icon16 ss lowprice"></i>
+                                    <input type="radio" name="stock[badge]" value="lowprice"{if $stock.badge|default:"" == "lowprice"} checked="checked"{/if}>
+                                    Скидка!
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <i class="icon16 ss div"></i>
+                                    <input type="radio" name="stock[badge]" value="code"{if $stock.badge|default:"" == "code"} checked="checked"{/if}>
+                                    Другой
+                                </label>
+                                <div class="badge_code"{if $stock.badge|default:"" != "code"} style="display: none;"{/if}>
+                                    <textarea style="min-height: 100px; margin: 10px 0 5px;" name="stock[badge_code]">&lt;div class="badge" style="background-color: #a1fcff;"&gt;&lt;span&gt;ВАШ ТЕКСТ&lt;/span&gt;&lt;/div&gt;</textarea>
+                                </div>
+                            </li>
+                            <li>
+                                <label>
+                                    <i class="icon16 no-bw"></i>
+                                    <input type="radio" name="stock[badge]" value=""{if $stock.badge|default:"" == ""} checked="checked"{/if}>
+                                    Не устанавливать наклейку
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
 
 
             <div class="field-group">
@@ -122,6 +169,19 @@
                         <input type="radio" name="stock[discount_type]" value="percent"{if $stock.discount_type|default:"percent" == "percent"} checked="checked"{/if}/> - Скидка процентная<br/>
                         <input type="radio" name="stock[discount_type]" value="absolute"{if $stock.discount_type|default:"percent" == "absolute"} checked="checked"{/if}/> - Скидка в валюте<br/>
                         <input type="radio" name="stock[discount_type]" value="price"{if $stock.discount_type|default:"percent" == "price"} checked="checked"{/if}/> - Новая цена<br/>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">Алгоритм действия скидки</div>
+                    <div class="value">
+                        <input type="radio" name="stock[discount_algorithm]" value="replace"{if $stock.discount_algorithm|default:"replace" == "replace"} checked="checked"{/if}/> - Замена цены<br/>
+                        <p class="hint">
+                            Плагин рассчитывает значение действующий цены с учетом заданной скидки и устанавливает ее в качестве основной цены, а в качестве зачеркнутой цены (если та не была задана) устанавливается старая основная цена.
+                        </p>
+                        <input type="radio" name="stock[discount_algorithm]" value="standart"{if $stock.discount_algorithm|default:"replace" == "standart"} checked="checked"{/if}/> - Скидка в корзине<br/>
+                        <p class="hint">
+                            Цена товара не меняется, плагин рассчитывает значение скидки для всего заказа. Скидка видна покупателю, например, в корзине магазина.
+                        </p>
                     </div>
                 </div>
 
@@ -401,4 +461,4 @@
     var frontend_url = '{$frontend_url}';
     var page_url = '{$page_url}';
 </script>
-<script type="text/javascript" src="{$wa_app_static_url}plugins/stock/js/backend_stock.js"></script>
+<script type="text/javascript" src="{$wa_app_static_url}plugins/stock/js/backend_stock.js?v={$wa->version()}"></script>

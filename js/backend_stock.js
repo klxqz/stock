@@ -1,4 +1,11 @@
 $(function () {
+    $('input[name="stock[badge]"]').change(function () {
+        if ($(this).val() == 'code') {
+            $('.badge_code').slideDown('low');
+        } else {
+            $('.badge_code').slideUp('low');
+        }
+    });
 
     $('input[name="stock[name]"]').change(function () {
         if (!$('input[name="stock[page_name]"]').val()) {

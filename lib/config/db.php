@@ -11,6 +11,7 @@ return array(
         'datetime_end' => array('datetime', 'null' => 0),
         'type' => array('enum', "'discount','gift'", 'null' => 0, 'default' => 'discount'),
         'discount_type' => array('enum', "'percent','absolute','price'", 'null' => 0, 'default' => 'percent'),
+        'discount_algorithm' => array('enum', "'replace','standart'", 'null' => 0, 'default' => 'replace'),
         'discount_value' => array('decimal', "15,4", 'null' => 0, 'default' => '0'),
         'gift_sku_id' => array('int', 11, 'null' => 0),
         'page_name' => array('varchar', 255, 'null' => 0, 'default' => ''),
@@ -19,6 +20,8 @@ return array(
         'meta_keywords' => array('varchar', 255, 'null' => 0, 'default' => ''),
         'meta_description' => array('varchar', 255, 'null' => 0, 'default' => ''),
         'page_content' => array('text', 'null' => 0),
+        'badge' => array('varchar', 32, 'null' => 0, 'default' => ''),
+        'badge_code' => array('text', 'null' => 0),
         ':keys' => array(
             'PRIMARY' => array('id'),
             'datetime_begin' => 'datetime_begin',

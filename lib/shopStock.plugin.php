@@ -159,6 +159,7 @@ HTML;
         foreach ($products as &$product) {
             if ($stock = $stock_model->getStockByProductID($product['id'])) {
                 $this->updatePrices($stock, $product);
+                $this->setBadge($stock, $product);
             }
         }
         unset($product);
@@ -178,8 +179,16 @@ HTML;
         return $skus;
     }
 
+    private function setBadge($stock, &$product) {
+        if (!empty($stock['badge']) && $stock['badge'] != 'code') {
+            $product['badge'] = $stock['badge'];
+        } elseif ($stock['badge'] == 'code') {
+            $product['badge'] = $stock['badge_code'];
+        }
+    }
+
     private function updatePrices($stock, &$item) {
-        if ($stock['type'] == 'discount' && $stock['discount_value'] > 0 && isset($item['price'])) {
+        if ($stock['type'] == 'discount' && $stock['discount_algorithm'] == 'replace' && $stock['discount_value'] > 0 && isset($item['price'])) {
             $old_price = $item['price'];
             if ($stock['discount_type'] == 'percent') {
                 $item['price'] = $item['price'] * (100 - $stock['discount_value']) / 100.0;
@@ -206,6 +215,36 @@ HTML;
             if (isset($item['compare_price']) && $item['compare_price'] == 0) {
                 $item['compare_price'] = $old_price;
             }
+        }
+    }
+
+    public function orderCalculateDiscount($params) {
+        if ($this->getSettings('status')) {
+            $stock_model = new shopStockPluginModel();
+            $discount = array();
+            foreach ($params['order']['items'] as $item_id => $item) {
+                if ($item['type'] == 'product') {
+                    $stock = $stock_model->getStockByProductID($item['product_id']);
+                    if (!empty($stock) && $stock['type'] == 'discount' && $stock['discount_algorithm'] == 'standart' && $stock['discount_value'] > 0) {
+                        $stock_discount_value = 0;
+                        if ($stock['discount_type'] == 'percent') {
+                            $stock_discount_value = shop_currency($item['price'] * $stock['discount_value'] / 100.0, $item['currency'], $params['order']['currency'], false);
+                        } elseif ($stock['discount_type'] == 'absolute') {
+                            $def_currency = wa('shop')->getConfig()->getCurrency(true);
+                            $stock_discount_value = shop_currency($stock['discount_value'], $def_currency, $params['order']['currency'], false);
+                        } elseif ($stock['discount_type'] == 'price') {
+                            $def_currency = wa('shop')->getConfig()->getCurrency(true);
+                            $new_price = shop_currency($stock['discount_value'], $def_currency, $item['currency'], false);
+                            $stock_discount_value = shop_currency($item['price'] - $new_price, $item['currency'], $params['order']['currency'], false);
+                        }
+                        $discount['items'][$item_id] = array(
+                            'discount' => $stock_discount_value * $item['quantity'],
+                            'description' => "Скидка по акции «{$stock['name']}»",
+                        );
+                    }
+                }
+            }
+            return $discount;
         }
     }
 
@@ -275,8 +314,6 @@ HTML;
                 $routing[$this->getSettings('page_url')] = 'frontend/stockList';
                 $routing[$this->getSettings('page_url') . '<stock>/'] = 'frontend/stock';
             }
-
-
             return $routing;
         }
     }
@@ -352,6 +389,14 @@ HTML;
             }
             return $urls;
         }
+    }
+
+    public function stockInfo($product_id) {
+        return false;
+    }
+
+    public static function shortList() {
+        return false;
     }
 
 }
