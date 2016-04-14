@@ -22,6 +22,8 @@ return array(
         'page_content' => array('text', 'null' => 0),
         'badge' => array('varchar', 32, 'null' => 0, 'default' => ''),
         'badge_code' => array('text', 'null' => 0),
+        'multiple_badges' => array('tinyint', 1, 'null' => 0, 'default' => '0'),
+        'rounding' => array('tinyint', 1, 'null' => 0, 'default' => '1'),
         ':keys' => array(
             'PRIMARY' => array('id'),
             'datetime_begin' => 'datetime_begin',

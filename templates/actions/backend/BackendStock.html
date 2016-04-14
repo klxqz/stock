@@ -122,6 +122,14 @@
                         </ul>
                     </div>
                 </div>
+                <div class="field">
+                    <div class="name">Множество наклеек</div>
+                    <div class="value">
+                        <input type="hidden" name="stock[multiple_badges]" value="0">
+                        <input type="checkbox" name="stock[multiple_badges]" value="1"{if $stock.multiple_badges|default:'0'} checked="checked"{/if}>
+                        <p class="hint">Если у товара уже есть наклейка, то наклейка акции не замещает уже установленную наклейку, а добавляется дополнительно к ней<br/>(Тема дизайна должна поддерживать использование нескольких наклеек)</p>
+                    </div>
+                </div>
             </div>
 
 
@@ -189,6 +197,14 @@
                     <div class="name">Скидка процентная</div>
                     <div class="value">
                         <input class="short bold numerical" type="text" name="stock[discount_value]" placeholder="0" value="{if $stock.discount_type|default:"percent" == "percent"}{(float)$stock.discount_value|default:0|escape}{else}0{/if}"><span>%</span>
+                    </div>
+                </div>
+                <div class="field discount-type-field discount-type-percent">
+                    <div class="name">Округлять цены</div>
+                    <div class="value">
+                        <input type="hidden" name="stock[rounding]" value="0">
+                        <input type="checkbox" name="stock[rounding]" value="1"{if $stock.rounding|default:'1'} checked="checked"{/if}>
+                        <p class="hint">Если указана процентаная скидка, то новая цена будет округляться до целого</p>
                     </div>
                 </div>
                 <div class="field discount-type-field discount-type-absolute">

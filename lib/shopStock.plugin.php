@@ -180,10 +180,20 @@ HTML;
     }
 
     private function setBadge($stock, &$product) {
+        $badge = null;
         if (!empty($stock['badge']) && $stock['badge'] != 'code') {
-            $product['badge'] = $stock['badge'];
+            $badge = $stock['badge'];
         } elseif ($stock['badge'] == 'code') {
-            $product['badge'] = $stock['badge_code'];
+            $badge = $stock['badge_code'];
+        }
+
+        if ($stock['multiple_badges'] && $badge) {
+            if ($product['badge']) {
+                $product['badge'] = shopHelper::getBadgeHtml($product['badge']);
+            }
+            $product['badge'] .= shopHelper::getBadgeHtml($badge);
+        } elseif($badge) {
+            $product['badge'] = $badge;
         }
     }
 
@@ -192,6 +202,9 @@ HTML;
             $old_price = $item['price'];
             if ($stock['discount_type'] == 'percent') {
                 $item['price'] = $item['price'] * (100 - $stock['discount_value']) / 100.0;
+                if ($stock['rounding']) {
+                    $item['price'] = round($item['price']);
+                }
             } elseif ($stock['discount_type'] == 'absolute') {
                 $discount_value = $stock['discount_value'];
                 if (!empty($item['product_id'])) {
