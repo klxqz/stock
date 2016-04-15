@@ -51,7 +51,7 @@ class shopStockPluginModel extends waModel {
                 case 'category':
                     wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 1);
                     $collection = new shopProductsCollection('category/' . $stock_product['value']);
-                    $products = $collection->getProducts('*', 0, null, true);
+                    $products = $collection->getProducts('*', 99999, null, true);
                     wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 0);
                     if (isset($products[$product_id])) {
                         return true;
@@ -67,7 +67,7 @@ class shopStockPluginModel extends waModel {
                 case 'set':
                     wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 1);
                     $collection = new shopProductsCollection('set/' . $stock_product['value']);
-                    $products = $collection->getProducts('*', 0, null, true);
+                    $products = $collection->getProducts('*', 99999, null, true);
                     wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 0);
                     if (isset($products[$product_id])) {
                         return true;
