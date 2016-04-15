@@ -108,7 +108,7 @@ HTML;
             }
 
             $collection = new shopProductsCollection('id/' . implode(',', $product_ids));
-            $gift_products = $collection->getProducts('*', 0, null, true);
+            $gift_products = $collection->getProducts('*', 99999, null, true);
             if ($gift_products) {
                 $view = wa()->getView();
                 $view->assign('include_template', $this->getSettings('cart_products_template'));
