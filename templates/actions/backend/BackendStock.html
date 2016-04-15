@@ -109,7 +109,7 @@
                                     Другой
                                 </label>
                                 <div class="badge_code"{if $stock.badge|default:"" != "code"} style="display: none;"{/if}>
-                                    <textarea style="min-height: 100px; margin: 10px 0 5px;" name="stock[badge_code]">&lt;div class="badge" style="background-color: #a1fcff;"&gt;&lt;span&gt;ВАШ ТЕКСТ&lt;/span&gt;&lt;/div&gt;</textarea>
+                                    <textarea style="min-height: 100px; margin: 10px 0 5px;" name="stock[badge_code]">{$stock.badge_code|default:'&lt;div class="badge" style="background-color: #a1fcff;"&gt;&lt;span&gt;ВАШ ТЕКСТ&lt;/span&gt;&lt;/div&gt;'|escape}</textarea>
                                 </div>
                             </li>
                             <li>
