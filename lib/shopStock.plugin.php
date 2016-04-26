@@ -192,7 +192,7 @@ HTML;
                 $product['badge'] = shopHelper::getBadgeHtml($product['badge']);
             }
             $product['badge'] .= shopHelper::getBadgeHtml($badge);
-        } elseif($badge) {
+        } elseif ($badge) {
             $product['badge'] = $badge;
         }
     }
@@ -338,40 +338,50 @@ HTML;
             if ($hash[0] !== 'stock') {
                 return false;
             }
-            $stock_products_model = new shopStockProductsPluginModel();
-            $stock_products = $stock_products_model->getByField('stock_id', $hash[1], true);
-            $product_ids = array();
-            $product_types = array();
-            foreach ($stock_products as $stock_product) {
-                switch ($stock_product['type']) {
-                    case 'product':
-                        $product_ids[] = $stock_products_model->escape($stock_product['value']);
-                        break;
-                    case 'category':
-                        $category_collection = new shopProductsCollection('category/' . $stock_product['value']);
-                        $products = $category_collection->getProducts('*', 0, null, true);
-                        if ($products) {
-                            $product_ids = array_merge($product_ids, array_keys($products));
-                        }
-                        break;
-                    case 'type':
-                        $product_types[] = $stock_products_model->escape($stock_product['value']);
-                        break;
-                    case 'set':
-                        $set_collection = new shopProductsCollection('set/' . $stock_product['value']);
-                        $products = $set_collection->getProducts('*', 0, null, true);
-                        if ($products) {
-                            $product_ids = array_merge($product_ids, array_keys($products));
-                        }
-                        break;
+
+            $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
+            $cache = new waSerializeCache('shopStockPlugin::productsCollection' . $hash[1], $cache_time, 'shop');
+            if ($cache && $cache->isCached()) {
+                $where = $cache->get();
+            } else {
+                $stock_products_model = new shopStockProductsPluginModel();
+                $stock_products = $stock_products_model->getByField('stock_id', $hash[1], true);
+                $product_ids = array();
+                $product_types = array();
+                foreach ($stock_products as $stock_product) {
+                    switch ($stock_product['type']) {
+                        case 'product':
+                            $product_ids[] = $stock_products_model->escape($stock_product['value']);
+                            break;
+                        case 'category':
+                            $category_collection = new shopProductsCollection('category/' . $stock_product['value']);
+                            $products = $category_collection->getProducts('*', 0, null, true);
+                            if ($products) {
+                                $product_ids = array_merge($product_ids, array_keys($products));
+                            }
+                            break;
+                        case 'type':
+                            $product_types[] = $stock_products_model->escape($stock_product['value']);
+                            break;
+                        case 'set':
+                            $set_collection = new shopProductsCollection('set/' . $stock_product['value']);
+                            $products = $set_collection->getProducts('*', 0, null, true);
+                            if ($products) {
+                                $product_ids = array_merge($product_ids, array_keys($products));
+                            }
+                            break;
+                    }
                 }
-            }
-            $where = array();
-            if ($product_ids) {
-                $where[] = "`id` IN (" . implode(',', $product_ids) . ")";
-            }
-            if ($product_types) {
-                $where[] = "`type_id` IN (" . implode(',', $product_types) . ")";
+                $where = array();
+                if ($product_ids) {
+                    $where[] = "`id` IN (" . implode(',', $product_ids) . ")";
+                }
+                if ($product_types) {
+                    $where[] = "`type_id` IN (" . implode(',', $product_types) . ")";
+                }
+                if ($cache) {
+                    $cache->set($where);
+                }
             }
             if ($where) {
                 $collection->addWhere(implode(" OR ", $where));

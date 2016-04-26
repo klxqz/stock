@@ -15,19 +15,37 @@ class shopStockPluginModel extends waModel {
     }
 
     public function getStockByProductID($product_id) {
-        $stocks = $this->getActiveStocks();
-        foreach ($stocks as $stock) {
-            if ($this->stockHasProduct($stock['id'], $product_id)) {
-                return $stock;
+        $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
+        $cache = new waSerializeCache('shopStockPlugin::getStockByProductID' . $product_id, $cache_time, 'shop');
+        if ($cache && $cache->isCached()) {
+            return $cache->get();
+        } else {
+            $stocks = $this->getActiveStocks();
+            foreach ($stocks as $stock) {
+                if ($this->stockHasProduct($stock['id'], $product_id)) {
+                    if ($cache) {
+                        $cache->set($stock);
+                    }
+                    return $stock;
+                }
             }
         }
     }
 
     public function getStockByCategoryID($category_id) {
-        $stocks = $this->getActiveStocks();
-        foreach ($stocks as $stock) {
-            if ($this->stockHasCategory($stock['id'], $category_id)) {
-                return $stock;
+        $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
+        $cache = new waSerializeCache('shopStockPlugin::getStockByCategoryID' . $category_id, $cache_time, 'shop');
+        if ($cache && $cache->isCached()) {
+            return $cache->get();
+        } else {
+            $stocks = $this->getActiveStocks();
+            foreach ($stocks as $stock) {
+                if ($this->stockHasCategory($stock['id'], $category_id)) {
+                    if ($cache) {
+                        $cache->set($stock);
+                    }
+                    return $stock;
+                }
             }
         }
     }
