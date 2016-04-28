@@ -338,9 +338,9 @@ HTML;
             if ($hash[0] !== 'stock') {
                 return false;
             }
-
+            $cache_id = md5('shopStockPlugin::productsCollection' . $hash[1]);
             $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
-            $cache = new waSerializeCache('shopStockPlugin::productsCollection' . $hash[1], $cache_time, 'shop');
+            $cache = new waSerializeCache($cache_id, $cache_time, 'shop');
             if ($cache && $cache->isCached()) {
                 $where = $cache->get();
             } else {
