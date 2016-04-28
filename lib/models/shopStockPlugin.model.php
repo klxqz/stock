@@ -17,7 +17,7 @@ class shopStockPluginModel extends waModel {
     public function getStockByProductID($product_id) {
         $cache_id = md5('shopStockPlugin::getStockByProductID' . $product_id);
         $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
-        $cache = new waSerializeCache($cache_id, $cache_time, 'shop');
+        $cache = new waSerializeCache($cache_id, $cache_time, 'shop/plugins/stock');
         if ($cache && $cache->isCached()) {
             return $cache->get();
         } else {
@@ -36,7 +36,7 @@ class shopStockPluginModel extends waModel {
     public function getStockByCategoryID($category_id) {
         $cache_id = md5('shopStockPlugin::getStockByCategoryID' . $category_id);
         $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
-        $cache = new waSerializeCache($cache_id, $cache_time, 'shop');
+        $cache = new waSerializeCache($cache_id, $cache_time, 'shop/plugins/stock');
         if ($cache && $cache->isCached()) {
             return $cache->get();
         } else {
