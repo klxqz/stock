@@ -18,38 +18,44 @@ class shopStockPluginModel extends waModel {
         $cache_id = md5('shopStockPlugin::getStockByProductID' . $product_id);
         $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
         $cache = new waSerializeCache($cache_id, $cache_time, 'shop/plugins/stock');
+        $result = false;
         if ($cache && $cache->isCached()) {
-            return $cache->get();
+            $result = $cache->get();
         } else {
             $stocks = $this->getActiveStocks();
             foreach ($stocks as $stock) {
                 if ($this->stockHasProduct($stock['id'], $product_id)) {
-                    if ($cache) {
-                        $cache->set($stock);
-                    }
-                    return $stock;
+                    $result = $stock;
+                    break;
                 }
             }
+            if ($cache) {
+                $cache->set($result);
+            }
         }
+        return $result;
     }
 
     public function getStockByCategoryID($category_id) {
         $cache_id = md5('shopStockPlugin::getStockByCategoryID' . $category_id);
         $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
         $cache = new waSerializeCache($cache_id, $cache_time, 'shop/plugins/stock');
+        $result = false;
         if ($cache && $cache->isCached()) {
-            return $cache->get();
+            $result = $cache->get();
         } else {
             $stocks = $this->getActiveStocks();
             foreach ($stocks as $stock) {
                 if ($this->stockHasCategory($stock['id'], $category_id)) {
-                    if ($cache) {
-                        $cache->set($stock);
-                    }
-                    return $stock;
+                    $result = $stock;
+                    break;
                 }
             }
+            if ($cache) {
+                $cache->set($result);
+            }
         }
+        return $result;
     }
 
     public function getActiveStocks() {
