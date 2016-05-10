@@ -374,10 +374,10 @@ HTML;
                 }
                 $where = array();
                 if ($product_ids) {
-                    $where[] = "`id` IN (" . implode(',', $product_ids) . ")";
+                    $where[] = "`id` IN (" . implode(',', array_unique($product_ids)) . ")";
                 }
                 if ($product_types) {
-                    $where[] = "`type_id` IN (" . implode(',', $product_types) . ")";
+                    $where[] = "`type_id` IN (" . implode(',', array_unique($product_types)) . ")";
                 }
                 if ($cache) {
                     $cache->set($where);
