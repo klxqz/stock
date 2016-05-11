@@ -263,6 +263,7 @@ HTML;
 
     public function orderActionCreate($params) {
         if ($this->getSettings('status')) {
+            $add_gift_flag = false;
             $order_id = $params['order_id'];
             $order_model = new shopOrderModel();
             $order_items_model = new shopOrderItemsModel();
@@ -308,15 +309,18 @@ HTML;
                                 . 'согласно условию акции «<a target="_blank" href="?action=products#/stock/' . $stock['id'] . '/">' . $stock['name'] . '</a>»',
                             );
                             $log_model->add($log_data);
+                            $add_gift_flag = true;
                         }
                     }
                 }
             }
 
-            $order['discount'] = shopDiscounts::calculate($order);
+            if ($add_gift_flag) {
+                $order['discount'] = shopDiscounts::calculate($order);
 
-            $workflow = new shopWorkflow();
-            $workflow->getActionById('edit')->run($order);
+                $workflow = new shopWorkflow();
+                $workflow->getActionById('edit')->run($order);
+            }
         }
     }
 
