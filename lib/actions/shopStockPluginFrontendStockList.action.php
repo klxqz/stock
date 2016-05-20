@@ -14,8 +14,9 @@ class shopStockPluginFrontendStockListAction extends shopFrontendAction {
         $this->getResponse()->setMeta('keywords', $settings['meta_keywords']);
         $this->getResponse()->setMeta('description', $settings['meta_description']);
 
+        $sort = $app_settings_model->get(shopStockPlugin::$plugin_id, 'sort');
         $stock_model = new shopStockPluginModel();
-        $stocks = $stock_model->getActiveStocks();
+        $stocks = $stock_model->getActiveStocks($sort);
         $this->view->assign('stocks', $stocks);
         $template_path = wa()->getDataPath('plugins/stock/templates/actions/frontend/FrontendStockList.html', false, 'shop', true);
         if (!file_exists($template_path)) {

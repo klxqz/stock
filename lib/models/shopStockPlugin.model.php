@@ -58,9 +58,13 @@ class shopStockPluginModel extends waModel {
         return $result;
     }
 
-    public function getActiveStocks() {
+    public function getActiveStocks($sort = 'ASC') {
+        $order_by = 'ORDER BY `id` DESC';
+        if (strtoupper($sort) == 'ASC') {
+            $order_by = 'ORDER BY `id` ASC';
+        }
         $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-        $sql = "SELECT * FROM {$this->table} WHERE `datetime_begin` < '" . $now . "' AND `datetime_end` > '" . $now . "' AND `enabled`= 1";
+        $sql = "SELECT * FROM {$this->table} WHERE `datetime_begin` < '" . $now . "' AND `datetime_end` > '" . $now . "' AND `enabled`= 1 " . $order_by;
         return $this->query($sql)->fetchAll();
     }
 

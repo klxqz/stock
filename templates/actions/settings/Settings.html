@@ -137,6 +137,15 @@
             </div>
             <div class="field">
                 <div class="name">
+                    Порядок вывода акций на странице
+                </div>
+                <div class="value">
+                    <input type="radio" name="shop_stock[sort]" value="asc"{if $settings.sort|default:'asc' == 'asc'} checked="checked"{/if} /> - прямой
+                    <input type="radio" name="shop_stock[sort]" value="desc"{if $settings.sort|default:'asc' == 'desc'} checked="checked"{/if} /> - обратный
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">
                     Шаблон
                 </div>
                 <div class="value">
