@@ -69,41 +69,12 @@ class shopStockPluginModel extends waModel {
     }
 
     private function stockHasProduct($stock_id, $product_id) {
-        $stock_products_model = new shopStockProductsPluginModel();
-        $stock_products = $stock_products_model->getByField('stock_id', $stock_id, true);
-        foreach ($stock_products as $stock_product) {
-            switch ($stock_product['type']) {
-                case 'product':
-                    if ($stock_product['value'] == $product_id) {
-                        return true;
-                    }
-                    break;
-                case 'category':
-                    wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 1);
-                    $collection = new shopProductsCollection('category/' . $stock_product['value']);
-                    $products = $collection->getProducts('*', 99999, null, true);
-                    wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 0);
-                    if (isset($products[$product_id])) {
-                        return true;
-                    }
-                    break;
-                case 'type':
-                    $product_model = new shopProductModel();
-                    $product = $product_model->getById($product_id);
-                    if ($stock_product['value'] == $product['type_id']) {
-                        return true;
-                    }
-                    break;
-                case 'set':
-                    wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 1);
-                    $collection = new shopProductsCollection('set/' . $stock_product['value']);
-                    $products = $collection->getProducts('*', 99999, null, true);
-                    wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 0);
-                    if (isset($products[$product_id])) {
-                        return true;
-                    }
-                    break;
-            }
+        wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 1);
+        $collection = new shopProductsCollection('stock/' . $stock_id);
+        $stock_products = $collection->getProducts('id,currency', 0, 99999, true);
+        wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 0);
+        if (isset($stock_products[$product_id])) {
+            return true;
         }
         return false;
     }

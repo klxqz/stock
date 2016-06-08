@@ -108,7 +108,7 @@ HTML;
             }
 
             $collection = new shopProductsCollection('id/' . implode(',', $product_ids));
-            $gift_products = $collection->getProducts('*', 99999, null, true);
+            $gift_products = $collection->getProducts('*', 0, 99999, true);
             if ($gift_products) {
                 $view = wa()->getView();
                 $view->assign('include_template', $this->getSettings('cart_products_template'));
@@ -359,7 +359,7 @@ HTML;
                             break;
                         case 'category':
                             $category_collection = new shopProductsCollection('category/' . $stock_product['value']);
-                            $products = $category_collection->getProducts('*', 0, null, true);
+                            $products = $category_collection->getProducts('*', 0, 99999, true);
                             if ($products) {
                                 $product_ids = array_merge($product_ids, array_keys($products));
                             }
@@ -369,7 +369,7 @@ HTML;
                             break;
                         case 'set':
                             $set_collection = new shopProductsCollection('set/' . $stock_product['value']);
-                            $products = $set_collection->getProducts('*', 0, null, true);
+                            $products = $set_collection->getProducts('*', 0, 99999, true);
                             if ($products) {
                                 $product_ids = array_merge($product_ids, array_keys($products));
                             }
