@@ -156,8 +156,15 @@ HTML;
 
     private function prepareProducts($products = array()) {
         $stock_model = new shopStockPluginModel();
+        $product_ids = array();
+        foreach ($products as $product) {
+            $product_ids[] = $product['id'];
+        }
+        $products_stocks = $stock_model->getStockByProducts($product_ids);
+
         foreach ($products as &$product) {
-            if ($stock = $stock_model->getStockByProductID($product['id'])) {
+            if (!empty($products_stocks[$product['id']])) {
+                $stock = $products_stocks[$product['id']];
                 $this->updatePrices($stock, $product);
                 $this->setBadge($stock, $product);
             }
@@ -169,8 +176,15 @@ HTML;
 
     private function prepareSkus($skus = array()) {
         $stock_model = new shopStockPluginModel();
+        $product_ids = array();
+        foreach ($skus as $sku) {
+            $product_ids[] = $sku['product_id'];
+        }
+        $products_stocks = $stock_model->getStockByProducts($product_ids);
+
         foreach ($skus as &$sku) {
-            if ($stock = $stock_model->getStockByProductID($sku['product_id'])) {
+            if (!empty($products_stocks[$sku['product_id']])) {
+                $stock = $products_stocks[$sku['product_id']];
                 $this->updatePrices($stock, $sku);
             }
         }

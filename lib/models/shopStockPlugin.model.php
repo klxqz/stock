@@ -14,6 +14,26 @@ class shopStockPluginModel extends waModel {
         parent::deleteById($id);
     }
 
+    public function getStockByProducts($product_ids) {
+        $result = array();
+        $stocks = $this->getActiveStocks();
+        foreach ($stocks as $stock) {
+            wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 1);
+            $collection = new shopProductsCollection('stock/' . $stock['id']);
+            $stock_products = $collection->getProducts('id,currency', 0, 99999, true);
+            wa()->getStorage()->set('shop/stockplugin/frontendProductsOff', 0);
+            foreach ($stock_products as $stock_product) {
+                if (in_array($stock_product['id'], $product_ids)) {
+                    $result[$stock_product['id']] = $stock;
+                    if (count($result) == count($product_ids)) {
+                        break 2;
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
     public function getStockByProductID($product_id) {
         $cache_id = md5('shopStockPlugin::getStockByProductID' . $product_id);
         $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
