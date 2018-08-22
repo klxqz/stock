@@ -4,7 +4,7 @@ return array(
     'name' => 'Акции',
     'description' => 'Возможность организовать акцию на сайте',
     'vendor' => '985310',
-    'version' => '2.3.2',
+    'version' => '3.0.1',
     'img' => 'img/stock.png',
     'frontend' => true,
     'shop_settings' => true,

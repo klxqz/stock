@@ -85,7 +85,14 @@ class shopStockPluginModel extends waModel {
         }
         $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
         $sql = "SELECT * FROM {$this->table} WHERE `datetime_begin` < '" . $now . "' AND `datetime_end` > '" . $now . "' AND `enabled`= 1 " . $order_by;
-        return $this->query($sql)->fetchAll();
+
+        $stocks = $this->query($sql)->fetchAll();
+        foreach ($stocks as $index => $stock) {
+            if (shopStockPlugin::getLastTime($stock) <= 0) {
+                unset($stocks[$index]);
+            }
+        }
+        return $stocks;
     }
 
     private function stockHasProduct($stock_id, $product_id) {

@@ -1,4 +1,76 @@
 $(function () {
+    $('input[name="stock[restart]"]').change(function () {
+        $('.restart-field-group').slideToggle('low');
+    });
+
+    $('input[name="stock[promocode_only]"]').change(function () {
+        $('.promocode-field').slideToggle('low');
+    });
+
+    function uploadInit() {
+        var url = $('.fileupload:first').data('action');
+        var upload = $('.fileupload:first').parents('div.field');
+        $('.fileupload:first').fileupload({
+            url: url,
+            dataType: 'json',
+            start: function () {
+                upload.find('.fileupload:first').hide();
+                upload.find('.js-fileupload-progress').show();
+            },
+            done: function (e, data) {
+                var response = data.jqXHR.responseJSON;
+                if (response.status == 'ok') {
+                    upload.find('.js-fileupload-progress').html('<i class="icon16 yes"></i>');
+                    $('input[name="stock[img]"]').val(response.data.img);
+                    $('.img-review').html('<img src="' + response.data.img_url + '"/>');
+                    $('.delete-img').show();
+                } else {
+                    upload.find('.js-fileupload-progress').html('<i class="icon16 no"></i> ' + response.errors.join(','));
+                }
+                upload.find('.fileupload:first').show();
+                setTimeout(function () {
+                    upload.find('.js-fileupload-progress').empty();
+                }, 3000);
+
+            },
+            fail: function (e, data) {
+                upload.find('.js-fileupload-progress').html('<i class="icon16 no"></i>');
+                upload.find('.fileupload:first').show();
+            }
+        });
+    }
+    uploadInit();
+
+    $('.delete-img').click(function () {
+        $.ajax({
+            type: 'POST',
+            url: '?plugin=stock&action=deleteStockImage',
+            data: {
+                img: $('input[name="stock[img]"]').val()
+            },
+            dataType: 'json',
+            success: function (data, textStatus, jqXHR) {
+                if (data.status == 'ok') {
+                    $('.img-review img').remove();
+                    $('.delete-img').hide();
+                } else {
+                    alert(data.errors.join(', '));
+                }
+            },
+            error: function (jqXHR, errorText) {
+                alert(jqXHR.responseText);
+            }
+        });
+        return false;
+    });
+
+
+    $('.feature-block b i').click(function () {
+        $(this).toggleClass('darr').toggleClass('rarr');
+        $(this).closest('.feature-block').find('.values').slideToggle('low');
+    });
+
+
     $('input[name="stock[badge]"]').change(function () {
         if ($(this).val() == 'code') {
             $('.badge_code').slideDown('low');
@@ -103,9 +175,9 @@ $(function () {
     });
 
     $('.add-stock-products-button').click(function () {
-        var type_names = {"product": "Товар", "set": "Список", "category": "Категория", "type": "Тип товаров"};
-        var icons = {"product": "folders", "set": "ss set", "category": "folder", "type": "ss pt box"};
-        var urls = {"product": "?action=products#/product/", "set": "?action=products#/products/set_id=", "category": "?action=products#/products/category_id=", "type": "?action=products#/products/type_id="};
+        var type_names = {"product": "Товар", "set": "Список", "category": "Категория", "type": "Тип товаров", "type": "Тип товаров", "feature": "Характеристика"};
+        var icons = {"product": "folders", "set": "ss set", "category": "folder", "type": "ss pt box", "feature": "ss features-bw"};
+        var urls = {"product": "?action=products#/product/", "set": "?action=products#/products/set_id=", "category": "?action=products#/products/category_id=", "type": "?action=products#/products/type_id=", "feature": "?action=settings#/features/"};
         var type = $(this).data('type');
         var id = $(this).data('id');
         var name = $(this).data('name');
@@ -121,7 +193,7 @@ $(function () {
                 type: type,
                 type_name: type_names[type],
                 icon: icons[type],
-                url: urls[type] + id,
+                url: (type != 'feature' ? urls[type] + id : urls[type]),
                 name: name,
                 value: id
             };
@@ -231,7 +303,10 @@ $(function () {
         }
         return false;
     });
-
+    $("#stock-edit-form .timepicker").timepicker({
+        controlType: 'select',
+        timeFormat: 'HH:mm:ss'
+    });
     $("#stock-edit-form .datetimepicker").datetimepicker({
         controlType: 'select'
     });

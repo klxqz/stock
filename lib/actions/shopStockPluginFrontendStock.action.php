@@ -20,7 +20,12 @@ class shopStockPluginFrontendStockAction extends shopFrontendAction {
 
         $this->view->assign('stock', $stock);
         $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-        $time = strtotime($stock['datetime_end']) - strtotime($now);
+        //$time = strtotime($stock['datetime_end']) - strtotime($now);
+        $time = shopStockPlugin::getLastTime($stock);
+        if ($time <= 0) {
+            throw new waException(_ws("Page not found"), 404);
+        }
+
         $this->view->assign('time', $time);
         $settings = $app_settings_model->get(shopStockPlugin::$plugin_id);
         $this->view->assign('settings', $settings);
