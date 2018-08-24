@@ -59,4 +59,33 @@
 
         return false;
     });
+
+    $(document).on('click', '.stock-update', function () {
+        var self = $(this);
+        var id = self.data('id');
+        var loading = $('<i class="icon16 loading"></i>');
+        self.after(loading);
+        $.ajax({
+            type: 'POST',
+            url: '?plugin=stock&action=update',
+            data: {
+                id: id
+            },
+            dataType: 'json',
+            success: function (data, textStatus, jqXHR) {
+                loading.remove();
+                if (data.status == 'ok') {
+                    self.after('<i class="icon16 yes"></i>');
+                    window.location.reload();
+                } else {
+                    self.html('<i class="icon16 no"></i> ' + data.errors.join(', '));
+                }
+            },
+            error: function (jqXHR, errorText) {
+                loading.remove();
+                alert(jqXHR.responseText);
+            }
+        });
+        return false;
+    });
 })(jQuery);

@@ -17,7 +17,20 @@ class shopStockPluginBackendSaveController extends waJsonController {
                 $stock['restart_period'] = json_encode($stock['restart_period']);
             }
 
+            if (!empty($stock['params'])) {
+                $params = array();
+                $rows = explode("\n", $stock['params']);
+                foreach ($rows as $row) {
+                    list($key, $value) = explode("=", $row);
+                    $params[trim($key)] = trim($value);
+                }
+                $stock['params'] = json_encode($params);
+            }
+
             $stock_model = new shopStockPluginModel();
+
+            $stock_model->query("set sql_mode='STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'");
+
             if (!empty($stock['id'])) {
                 $stock_model->updateById($stock['id'], $stock);
             } else {
@@ -30,20 +43,40 @@ class shopStockPluginBackendSaveController extends waJsonController {
                 $stock_model->updateById($stock['id'], $stock);
             }
 
+            $stock_storefront = new shopStockPluginStorefrontModel();
+            $stock_storefront->deleteByField('stock_id', $stock['id']);
+            if (!empty($stock['storefront'])) {
+                $storefront = array();
+                foreach ($stock['storefront'] as $route_hash) {
+                    $storefront[] = array(
+                        'stock_id' => $stock['id'],
+                        'route_hash' => $route_hash,
+                    );
+                }
+                $stock_storefront->multiInsert($storefront);
+            }
+
+
+
             $stock_products = waRequest::post('stock_products');
+            $stock_products_model = new shopStockPluginProductsModel();
+            $stock_products_model->deletebyField('stock_id', $stock['id']);
             if (!empty($stock_products['value'])) {
-                $stock_products_model = new shopStockProductsPluginModel();
+                $data_products = array();
                 foreach ($stock_products['value'] as $index => $value) {
                     if (empty($stock_products['id'][$index])) {
-                        $data = array(
+                        $data_products[] = array(
                             'stock_id' => $stock['id'],
                             'type' => $stock_products['type'][$index],
-                            'value' => $value,
+                            'value' => $value
                         );
-                        $stock_products_model->insert($data);
                     }
                 }
+                $stock_products_model->multiInsert($data_products);
             }
+            $stock_products_model->updateStockProductJoin($stock['id']);
+
+
             if ($stock = $this->checkStockProducts($stock['id'])) {
                 $stock_model->deleteById($stock['id']);
                 throw new waException(sprintf("Обнаружено пересечение товаров с акцией: «%s»", $stock['name']));

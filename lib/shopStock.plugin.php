@@ -2,10 +2,94 @@
 
 class shopStockPlugin extends shopPlugin {
 
-    public static $plugin_id = array('shop', 'stock');
+    public static $templates = array(
+        'Stock' => array(
+            'name' => 'Шаблон акции',
+            'tpl_path' => 'plugins/stock/templates/',
+            'tpl_name' => 'Stock',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
+        'FrontendCart' => array(
+            'name' => 'Шаблон вывода подарков в корзине',
+            'tpl_path' => 'plugins/stock/templates/',
+            'tpl_name' => 'FrontendCart',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
+        'FrontendStockList' => array(
+            'name' => 'Шаблон страницы «Список акций»',
+            'tpl_path' => 'plugins/stock/templates/actions/frontend/',
+            'tpl_name' => 'FrontendStockList',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
+        'FrontendStock' => array(
+            'name' => 'Шаблон страницы акции',
+            'tpl_path' => 'plugins/stock/templates/actions/frontend/',
+            'tpl_name' => 'FrontendStock',
+            'tpl_ext' => 'html',
+            'public' => false
+        ),
+    );
 
-    //public static function ($stock) {
-    //}
+    public function saveSettings($settings = array()) {
+        $route_hash = waRequest::post('route_hash');
+        $route_settings = waRequest::post('route_settings');
+
+        if ($routes = $this->getSettings('routes')) {
+            $settings['routes'] = $routes;
+        } else {
+            $settings['routes'] = array();
+        }
+        $settings['routes'][$route_hash] = $route_settings;
+        $settings['route_hash'] = $route_hash;
+        parent::saveSettings($settings);
+
+
+        $templates = waRequest::post('templates');
+        foreach ($templates as $template_id => $template) {
+            $s_template = self::$templates[$template_id];
+            if (!empty($template['reset_tpl']) || waRequest::post('reset_tpl_all')) {
+                $tpl_full_path = $s_template['tpl_path'] . $route_hash . '.' . $s_template['tpl_name'] . '.' . $s_template['tpl_ext'];
+                $template_path = wa()->getDataPath($tpl_full_path, $s_template['public'], 'shop', true);
+                @unlink($template_path);
+            } else {
+                $tpl_full_path = $s_template['tpl_path'] . $route_hash . '.' . $s_template['tpl_name'] . '.' . $s_template['tpl_ext'];
+                $template_path = wa()->getDataPath($tpl_full_path, $s_template['public'], 'shop', true);
+                if (!file_exists($template_path)) {
+                    $tpl_full_path = $s_template['tpl_path'] . $s_template['tpl_name'] . '.' . $s_template['tpl_ext'];
+                    $template_path = wa()->getAppPath($tpl_full_path, 'shop');
+                }
+                $content = file_get_contents($template_path);
+                if (!empty($template['template']) && strcmp(str_replace("\r", "", $template['template']), str_replace("\r", "", $content)) != 0) {
+                    $tpl_full_path = $s_template['tpl_path'] . $route_hash . '.' . $s_template['tpl_name'] . '.' . $s_template['tpl_ext'];
+                    $template_path = wa()->getDataPath($tpl_full_path, $s_template['public'], 'shop', true);
+                    $f = fopen($template_path, 'w');
+                    if (!$f) {
+                        throw new waException('Не удаётся сохранить шаблон. Проверьте права на запись ' . $template_path);
+                    }
+                    fwrite($f, $template['template']);
+                    fclose($f);
+                }
+            }
+        }
+    }
+
+    public static function isEnabled(&$route_hash = null) {
+        if (!wa('shop')->getPlugin('stock')->getSettings('status')) {
+            return false;
+        }
+        if (shopStockHelper::getRouteSettings(null, 'status')) {
+            $route_hash = null;
+            return shopStockHelper::getRouteSettings();
+        } elseif (shopStockHelper::getRouteSettings(0, 'status')) {
+            $route_hash = 0;
+            return shopStockHelper::getRouteSettings(0);
+        } else {
+            return false;
+        }
+    }
 
     public static function getStockImageUrl($stock) {
         if (!is_array($stock)) {
@@ -21,77 +105,25 @@ class shopStockPlugin extends shopPlugin {
         return false;
     }
 
-    private function getRestartPeriod($stock) {
-        if (is_array($stock['restart_period'])) {
-            return $stock['restart_period'];
-        } else {
-            return json_decode($stock['restart_period'], true);
-        }
-    }
-
-    public static function getLastTime(&$stock) {
-        $last_time = 0;
-        $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-        if ($stock['restart']) {
-            if (!$stock['period_runing']) {
-                $restart_period = self::getRestartPeriod($stock);
-                $current_day = date('D');
-                if (in_array($current_day, $restart_period) || in_array('Anyday', $restart_period)) {
-                    $period_begin = date('Y-m-d ' . $stock['begin_time']);
-                    $period_end = date('Y-m-d H:i:s', strtotime($period_begin) + $stock['duration_time'] * 3600);
-                    $stock = array_merge($stock, array(
-                        'period_begin' => $period_begin,
-                        'period_end' => $period_end,
-                        'period_runing' => 1,
-                            )
-                    );
-                    $stock_model = new shopStockPluginModel();
-                    $stock_model->updateById($stock['id'], $stock);
-                }
-            } else {
-                $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-                if (strtotime($stock['period_end']) - strtotime($now) <= 0) {
-                    $stock = array_merge($stock, array(
-                        'period_begin' => '0000-00-00 00:00:00',
-                        'period_end' => '0000-00-00 00:00:00',
-                        'period_runing' => 0,
-                    ));
-                    $stock_model = new shopStockPluginModel();
-                    $stock_model->updateById($stock['id'], $stock);
-                }
-            }
-            $last_time = strtotime($stock['period_end']) - strtotime($now);
-        } else {
-            $last_time = strtotime($stock['datetime_end']) - strtotime($now);
-        }
-        return $last_time;
-    }
-
     public static function display($stock) {
-        $app_settings_model = new waAppSettingsModel();
-        if (!$app_settings_model->get(self::$plugin_id, 'status')) {
-            return false;
+        if (!($route_settings = self::isEnabled($route_hash))) {
+            return;
         }
         if (!is_array($stock)) {
             $stock_model = new shopStockPluginModel();
             $stock = $stock_model->getById($stock);
+            $stock['params'] = json_decode($stock['params'], true);
         }
         if ($stock) {
-            $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-            $time = strtotime($stock['datetime_end']) - strtotime($now);
-
-            $time = self::getLastTime($stock);
-
-
+            $time = shopStockHelper::getLastTime($stock);
             $view = wa()->getView();
-            $view->assign('settings', $app_settings_model->get(self::$plugin_id));
-            $view->assign('stock', $stock);
-            $view->assign('time', $time);
-            $template_path = wa()->getDataPath('plugins/stock/templates/Stock.html', false, 'shop', true);
-            if (!file_exists($template_path)) {
-                $template_path = wa()->getAppPath('plugins/stock/templates/Stock.html', 'shop');
-            }
-            $html = $view->fetch($template_path);
+            $view->assign(array(
+                'settings' => $route_settings,
+                'stock' => $stock,
+                'time' => $time,
+            ));
+            $stock_template = shopStockHelper::getRouteTemplates($route_hash, 'Stock', false);
+            $html = $view->fetch($stock_template['template_path']);
             return $html;
         }
     }
@@ -102,8 +134,10 @@ class shopStockPlugin extends shopPlugin {
     }
 
     public static function getStockByProduct($product) {
-        if (!empty($product['id'])) {
+        if (is_array($product) && !empty($product['id'])) {
             $product_id = $product['id'];
+        } elseif ($product instanceof shopProduct) {
+            $product_id = $product->id;
         } else {
             $product_id = $product;
         }
@@ -122,12 +156,14 @@ class shopStockPlugin extends shopPlugin {
     }
 
     public function backendProducts($params) {
-        if ($this->getSettings('status')) {
-            $plugin_url = $this->getPluginStaticUrl();
-            $stock_model = new shopStockPluginModel();
-            $stocks = $stock_model->getAll();
-            $count = count($stocks);
-            $sidebar_top_li_html = <<<HTML
+        if (!$this->getSettings('status')) {
+            return;
+        }
+        $plugin_url = $this->getPluginStaticUrl();
+        $stock_model = new shopStockPluginModel();
+        $stocks = $stock_model->getAll();
+        $count = count($stocks);
+        $sidebar_top_li_html = <<<HTML
 <li id="s-stocks">
 <a href = "#/stockList/">
     <span class="count">{$count}</span>
@@ -140,90 +176,96 @@ class shopStockPlugin extends shopPlugin {
 <link href="{$plugin_url}css/jquery-ui/jquery-ui-timepicker-addon.min.css" rel="stylesheet" type="text/css" />  
 <script type="text/javascript" src="{$plugin_url}js/jquery-ui/jquery-ui-timepicker-addon.min.js"></script>
 HTML;
-            $lang = substr(wa()->getLocale(), 0, 2);
-            if ($lang == 'ru') {
-                $sidebar_top_li_html .= '<script type="text/javascript" src="' . $plugin_url . 'js/jquery-ui/i18n/jquery-ui-timepicker-ru.js"></script>';
-            }
-
-            $toolbar_organize_li_html = '<div style="display: none;" id="stock-dialog"></div><li data-action="stock"><a class="add-stock-products" href="#"><i class="icon16 add"></i>Добавить в акцию</a></li>';
-
-            return array(
-                'sidebar_top_li' => $sidebar_top_li_html,
-                'toolbar_organize_li' => $toolbar_organize_li_html
-            );
+        $lang = substr(wa()->getLocale(), 0, 2);
+        if ($lang == 'ru') {
+            $sidebar_top_li_html .= '<script type="text/javascript" src="' . $plugin_url . 'js/jquery-ui/i18n/jquery-ui-timepicker-ru.js"></script>';
         }
+
+        $toolbar_organize_li_html = '<div style="display: none;" id="stock-dialog"></div><li data-action="stock"><a class="add-stock-products" href="#"><i class="icon16 add"></i>Добавить в акцию</a></li>';
+
+        return array(
+            'sidebar_top_li' => $sidebar_top_li_html,
+            'toolbar_organize_li' => $toolbar_organize_li_html
+        );
     }
 
     public function frontendHomepage() {
-        if ($this->getSettings('status')) {
-            $stock_model = new shopStockPluginModel();
-            $stocks = $stock_model->getActiveStocks();
-            $html = '';
-            foreach ($stocks as $stock) {
-                if ($stock['homepage']) {
-                    $html .= self::display($stock);
+        if (!($route_settings = self::isEnabled())) {
+            return;
+        }
+        $stock_model = new shopStockPluginModel();
+        $stocks = $stock_model->getActiveStocks($route_settings['sort']);
+        $html = '';
+        foreach ($stocks as $stock) {
+            if ($stock['homepage']) {
+                $html .= self::display($stock);
+            }
+        }
+        return $html;
+    }
+
+    public function frontendCart() {
+        if (!($route_settings = self::isEnabled($route_hash))) {
+            return;
+        }
+        $cart = new shopCart();
+        $items = $cart->items();
+
+        $product_ids = array();
+        foreach ($items as $item) {
+            if (!empty($item['product_id'])) {
+                $product_ids[] = $item['product_id'];
+            }
+        }
+        $stock_model = new shopStockPluginModel();
+        $stocks = $stock_model->getStockByProducts($product_ids);
+
+        $sku_model = new shopProductSkusModel();
+        $gift_product_ids = array();
+        foreach ($stocks as $stock) {
+            if ($stock['type'] == 'gift' && $stock['gift_sku_id']) {
+                if ($sku = $sku_model->getById($stock['gift_sku_id'])) {
+                    $gift_product_ids[] = $sku['product_id'];
                 }
             }
+        }
+
+        $collection = new shopProductsCollection('id/' . implode(',', $gift_product_ids));
+        $gift_products = $collection->getProducts('*', 0, 99999, true);
+        if ($gift_products) {
+            $view = wa()->getView();
+            $view->assign('include_template', $route_settings['cart_products_template']);
+            $view->assign('gift_products', $gift_products);
+            $frontend_cart_template = shopStockHelper::getRouteTemplates($route_hash, 'FrontendCart', false);
+            $html = $view->fetch($frontend_cart_template['template_path']);
             return $html;
         }
     }
 
-    public function frontendCart() {
-        if ($this->getSettings('status')) {
-            $cart = new shopCart();
-            $items = $cart->items();
-            $stock_model = new shopStockPluginModel();
-
-            $product_ids = array();
-            foreach ($items as $item) {
-                if ($stock = $stock_model->getStockByProductID($item['product_id'])) {
-                    if ($stock['type'] == 'gift' && $stock['gift_sku_id']) {
-                        $sku_model = new shopProductSkusModel();
-                        if ($sku = $sku_model->getById($stock['gift_sku_id'])) {
-                            $product_ids[] = $sku['product_id'];
-                        }
-                    }
-                }
-            }
-
-            $collection = new shopProductsCollection('id/' . implode(',', $product_ids));
-            $gift_products = $collection->getProducts('*', 0, 99999, true);
-            if ($gift_products) {
-                $view = wa()->getView();
-                $view->assign('include_template', $this->getSettings('cart_products_template'));
-                $view->assign('gift_products', $gift_products);
-                $template_path = wa()->getDataPath('plugins/stock/templates/FrontendCart.html', false, 'shop', true);
-                if (!file_exists($template_path)) {
-                    $template_path = wa()->getAppPath('plugins/stock/templates/FrontendCart.html', 'shop');
-                }
-                $html = $view->fetch($template_path);
-                return $html;
-            }
-        }
-    }
-
     public function frontendProduct($product) {
-        if ($this->getSettings('status') && $this->getSettings('frontend_product_output')) {
-            $stock_model = new shopStockPluginModel();
-            if ($stock = $stock_model->getStockByProductID($product->id)) {
-                $html = self::display($stock);
-                return array($this->getSettings('frontend_product_output') => $html);
-            }
+        if (!($route_settings = self::isEnabled()) || empty($route_settings['frontend_product_output'])) {
+            return;
+        }
+
+        if ($stock = self::getStockByProduct($product->id)) {
+            $html = self::display($stock);
+            return array($route_settings['frontend_product_output'] => $html);
         }
     }
 
     public function frontendCategory($category) {
-        if ($this->getSettings('status') && $this->getSettings('frontend_category_output')) {
-            $stock_model = new shopStockPluginModel();
-            if ($stock = $stock_model->getStockByCategoryID($category['id'])) {
-                $html = self::display($stock);
-                return $html;
-            }
+        if (!($route_settings = self::isEnabled()) || empty($route_settings['frontend_category_output'])) {
+            return;
+        }
+
+        if ($stock = self::getStockByCategory($category['id'])) {
+            $html = self::display($stock);
+            return $html;
         }
     }
 
     public function frontendProducts(&$params) {
-        if ($this->getSettings('status') && !wa()->getStorage()->get('shop/stockplugin/frontendProductsOff')) {
+        if (self::isEnabled()) {
             if (!empty($params['products'])) {
                 $params['products'] = $this->prepareProducts($params['products']);
             }
@@ -335,232 +377,195 @@ HTML;
     }
 
     public function orderCalculateDiscount($params) {
-        if ($this->getSettings('status')) {
-            $post = waRequest::post();
-            if (isset($post['coupon_code'])) {
-                wa()->getStorage()->write('stock_plugin/promocode', $post['coupon_code']);
-            }
+        if (!($route_settings = self::isEnabled())) {
+            return;
+        }
 
-            $stock_model = new shopStockPluginModel();
-            $discount = array();
-            foreach ($params['order']['items'] as $item_id => $item) {
-                if ($item['type'] == 'product') {
-                    $stock = $stock_model->getStockByProductID($item['product_id']);
-                    if (!empty($stock) && $stock['type'] == 'discount' && $stock['discount_algorithm'] == 'standart' && $stock['discount_value'] > 0 && $this->checkPromoCode($stock)) {
-                        $stock_discount_value = 0;
-                        if ($stock['discount_type'] == 'percent') {
-                            $stock_discount_value = shop_currency($item['price'] * $stock['discount_value'] / 100.0, $item['currency'], $params['order']['currency'], false);
-                        } elseif ($stock['discount_type'] == 'absolute') {
-                            $def_currency = wa('shop')->getConfig()->getCurrency(true);
-                            $stock_discount_value = shop_currency($stock['discount_value'], $def_currency, $params['order']['currency'], false);
-                        } elseif ($stock['discount_type'] == 'price') {
-                            $def_currency = wa('shop')->getConfig()->getCurrency(true);
-                            $new_price = shop_currency($stock['discount_value'], $def_currency, $item['currency'], false);
-                            $stock_discount_value = shop_currency($item['price'] - $new_price, $item['currency'], $params['order']['currency'], false);
-                        }
-                        $discount['items'][$item_id] = array(
-                            'discount' => $stock_discount_value * $item['quantity'],
-                            'description' => "Скидка по акции «{$stock['name']}»",
-                        );
+        wa()->getStorage()->write('stock_plugin/promocode', waRequest::post('coupon_code'));
+        $product_ids = array();
+        foreach ($params['order']['items'] as $item_id => $item) {
+            if (!empty($item['product_id'])) {
+                $product_ids[] = $item['product_id'];
+            }
+        }
+
+        $stock_model = new shopStockPluginModel();
+        $stocks = $stock_model->getStockByProducts($product_ids);
+        if (!$stocks) {
+            return;
+        }
+
+        $discount = array();
+        foreach ($params['order']['items'] as $item_id => $item) {
+            if ($item['type'] == 'product' && !empty($stocks[$item['product_id']])) {
+                $stock = $stocks[$item['product_id']];
+                if ($stock['type'] == 'discount' && $stock['discount_algorithm'] == 'standart' && $stock['discount_value'] > 0 && $this->checkPromoCode($stock)) {
+                    $stock_discount_value = 0;
+                    if ($stock['discount_type'] == 'percent') {
+                        $stock_discount_value = shop_currency($item['price'] * $stock['discount_value'] / 100.0, $item['currency'], $params['order']['currency'], false);
+                    } elseif ($stock['discount_type'] == 'absolute') {
+                        $def_currency = wa('shop')->getConfig()->getCurrency(true);
+                        $stock_discount_value = shop_currency($stock['discount_value'], $def_currency, $params['order']['currency'], false);
+                    } elseif ($stock['discount_type'] == 'price') {
+                        $def_currency = wa('shop')->getConfig()->getCurrency(true);
+                        $new_price = shop_currency($stock['discount_value'], $def_currency, $item['currency'], false);
+                        $stock_discount_value = shop_currency($item['price'] - $new_price, $item['currency'], $params['order']['currency'], false);
                     }
+                    $discount['items'][$item_id] = array(
+                        'discount' => $stock_discount_value * $item['quantity'],
+                        'description' => "Скидка по акции «{$stock['name']}»",
+                    );
                 }
             }
-            return $discount;
         }
+        return $discount;
     }
 
     public function orderActionCreate($params) {
-        if ($this->getSettings('status')) {
-            $add_gift_flag = false;
-            $order_id = $params['order_id'];
-            $contact_id = $params['contact_id'];
-            $order_model = new shopOrderModel();
-            $order_items_model = new shopOrderItemsModel();
-            $log_model = new shopOrderLogModel();
+        if (!($route_settings = self::isEnabled())) {
+            return;
+        }
 
-            $order = $order_model->getById($order_id);
-            $order['contact'] = new waContact($contact_id);
-            $order['items'] = $order_items_model->getItems($order_id);
+        $add_gift_flag = false;
+        $order_id = $params['order_id'];
+        $contact_id = $params['contact_id'];
+        $order_model = new shopOrderModel();
+        $log_model = new shopOrderLogModel();
 
+        $order = $order_model->getOrder($order_id);
 
-            $def_currency = wa('shop')->getConfig()->getCurrency(true);
-            $product_percent_bonus = 0;
-            $stock_model = new shopStockPluginModel();
-            foreach ($order['items'] as $item) {
-                if (empty($item['product_id'])) {
-                    continue;
-                }
-                if ($stock = $stock_model->getStockByProductID($item['product_id'])) {
-                    if ($stock['type'] == 'bonus' && $stock['product_percent_bonus']) {
-                        $product_bonus = $item['price'] * $item['quantity'] * $stock['product_percent_bonus'] / 100.0;
-                        $product_percent_bonus += shop_currency($product_bonus, $def_currency, $order['currency'], false);
-                    } elseif ($stock['type'] == 'gift' && $stock['gift_sku_id']) {
-                        $sku_model = new shopProductSkusModel();
-                        if ($sku = $sku_model->getById($stock['gift_sku_id'])) {
-                            $product_model = new shopProductModel();
-                            $product = $product_model->getById($sku['product_id']);
-                            $add_item = array(
-                                'order_id' => $order_id,
-                                'name' => $product['name'] . ' (Подарок)',
-                                'product_id' => $product['id'],
-                                'sku_id' => $sku['id'],
-                                'sku_code' => $sku['sku'],
-                                'type' => 'product',
-                                'service_id' => null,
-                                'service_variant_id' => null,
-                                'price' => 0,
-                                'quantity' => $item['quantity'],
-                                'stock_id' => null,
-                            );
-                            $order['items'][] = $add_item;
+        $product_ids = array();
+        foreach ($order['items'] as $item) {
+            if (!empty($item['product_id'])) {
+                $product_ids[] = $item['product_id'];
+            }
+        }
+        $stock_model = new shopStockPluginModel();
+        $stocks = $stock_model->getStockByProducts($product_ids);
+        if (!$stocks) {
+            return;
+        }
 
-                            $name = $product['name'];
+        $def_currency = wa('shop')->getConfig()->getCurrency(true);
+        $product_percent_bonus = 0;
 
-                            $log_data = array(
-                                'action_id' => 'comment',
-                                'order_id' => $order_id,
-                                'before_state_id' => $order['state_id'],
-                                'after_state_id' => $order['state_id'],
-                                'text' => 'Плагин «<a target="_blank" href="?action=plugins#/stock/">Акции</a>»: '
-                                . 'К заказу добавлен подарок <a target="_blank" href="?action=products#/product/' . $product['id'] . '/">' . $name . '</a> '
-                                . 'согласно условию акции «<a target="_blank" href="?action=products#/stock/' . $stock['id'] . '/">' . $stock['name'] . '</a>»',
-                            );
-                            $log_model->add($log_data);
-                            $add_gift_flag = true;
-                        }
-                    }
+        foreach ($order['items'] as $item) {
+            if (empty($item['product_id']) || empty($stocks[$item['product_id']])) {
+                continue;
+            }
+            $stock = $stocks[$item['product_id']];
+            if ($stock['type'] == 'bonus' && $stock['product_percent_bonus']) {
+                $product_bonus = $item['price'] * $item['quantity'] * $stock['product_percent_bonus'] / 100.0;
+                $product_percent_bonus += shop_currency($product_bonus, $def_currency, $order['currency'], false);
+            } elseif ($stock['type'] == 'gift' && $stock['gift_sku_id']) {
+                $sku_model = new shopProductSkusModel();
+                if ($sku = $sku_model->getById($stock['gift_sku_id'])) {
+                    $product_model = new shopProductModel();
+                    $product = $product_model->getById($sku['product_id']);
+                    $add_item = array(
+                        'order_id' => $order_id,
+                        'name' => $product['name'] . ' (Подарок)',
+                        'product_id' => $product['id'],
+                        'sku_id' => $sku['id'],
+                        'sku_code' => $sku['sku'],
+                        'type' => 'product',
+                        'service_id' => null,
+                        'service_variant_id' => null,
+                        'price' => 0,
+                        'quantity' => $item['quantity'],
+                        'stock_id' => null,
+                    );
+                    $order['items'][] = $add_item;
+
+                    $name = $product['name'];
+
+                    $log_data = array(
+                        'action_id' => 'comment',
+                        'order_id' => $order_id,
+                        'before_state_id' => $order['state_id'],
+                        'after_state_id' => $order['state_id'],
+                        'text' => 'Плагин «<a target="_blank" href="?action=plugins#/stock/">Акции</a>»: '
+                        . 'К заказу добавлен подарок <a target="_blank" href="?action=products#/product/' . $product['id'] . '/">' . $name . '</a> '
+                        . 'согласно условию акции «<a target="_blank" href="?action=products#/stock/' . $stock['id'] . '/">' . $stock['name'] . '</a>»',
+                    );
+                    $log_model->add($log_data);
+                    $add_gift_flag = true;
                 }
             }
+        }
 
-            $stock_absolute_bonus = 0;
-            foreach ($order['items'] as $item) {
-                $stock = $stock_model->getStockByProductID($item['product_id']);
+        $stock_absolute_bonus = 0;
+        foreach ($order['items'] as $item) {
+            if (!empty($item['product_id']) && !empty($stocks[$item['product_id']])) {
+                $stock = $stocks[$item['product_id']];
                 if ($stock['type'] == 'bonus' && $stock['absolute_bonus']) {
                     $stock_absolute_bonus = $stock['absolute_bonus'];
                     break;
                 }
             }
+        }
 
-            if ($stock_absolute_bonus || $product_percent_bonus) {
-                $total_bonus = $product_percent_bonus + $stock_absolute_bonus;
-                $comment = sprintf("Начисление бонусов за заказ %s", shopHelper::encodeOrderId($order_id));
-                $atm = new shopAffiliateTransactionModel();
-                $atm->applyBonus($contact_id, $total_bonus, $order_id, $comment);
-            }
+        if ($stock_absolute_bonus || $product_percent_bonus) {
+            $total_bonus = $product_percent_bonus + $stock_absolute_bonus;
+            $comment = sprintf("Начисление бонусов за заказ %s", shopHelper::encodeOrderId($order_id));
+            $atm = new shopAffiliateTransactionModel();
+            $atm->applyBonus($contact_id, $total_bonus, $order_id, $comment);
+        }
 
-            if ($add_gift_flag) {
-                $order['discount'] = shopDiscounts::calculate($order);
+        if ($add_gift_flag) {
+            $order['discount'] = shopDiscounts::calculate($order);
 
-                $workflow = new shopWorkflow();
-                $workflow->getActionById('edit')->run($order);
-            }
+            $workflow = new shopWorkflow();
+            $workflow->getActionById('edit')->run($order);
         }
     }
 
     public function routing($route = array()) {
-        if ($this->getSettings('status')) {
-            $routing = array();
-            if ($this->getSettings('stock_page')) {
-                $routing[$this->getSettings('page_url')] = 'frontend/stockList';
-                $routing[$this->getSettings('page_url') . '<stock>/'] = 'frontend/stock';
-            }
-            return $routing;
+        if (!($route_settings = self::isEnabled()) || empty($route_settings['stock_page']) || empty($route_settings['page_url'])) {
+            return;
         }
+        return array(
+            $route_settings['page_url'] => 'frontend/stockList',
+            $route_settings['page_url'] . '<stock>/' => 'frontend/stock',
+        );
     }
 
     public function productsCollection($params) {
-        if ($this->getSettings('status')) {
-            $collection = $params['collection'];
-            $hash = $collection->getHash();
-            if ($hash[0] !== 'stock') {
-                return false;
-            }
-            $cache_id = md5('shopStockPlugin::productsCollection' . $hash[1]);
-            $cache_time = wa()->getConfig()->isDebug() ? 0 : 7200;
-            $cache = new waSerializeCache($cache_id, $cache_time, 'shop/plugins/stock');
-            if ($cache && $cache->isCached()) {
-                $where = $cache->get();
-            } else {
-                $stock_products_model = new shopStockProductsPluginModel();
-                $stock_products = $stock_products_model->getByField('stock_id', $hash[1], true);
-                $product_ids = array();
-                $product_types = array();
-                foreach ($stock_products as $stock_product) {
-                    switch ($stock_product['type']) {
-                        case 'product':
-                            $product_ids[] = $stock_products_model->escape($stock_product['value']);
-                            break;
-                        case 'category':
-                            $category_collection = new shopProductsCollection('category/' . $stock_product['value']);
-                            $products = $category_collection->getProducts('*', 0, 99999, true);
-                            if ($products) {
-                                $product_ids = array_merge($product_ids, array_keys($products));
-                            }
-                            break;
-                        case 'type':
-                            $product_types[] = $stock_products_model->escape($stock_product['value']);
-                            break;
-                        case 'set':
-                            $set_collection = new shopProductsCollection('set/' . $stock_product['value']);
-                            $products = $set_collection->getProducts('*', 0, 99999, true);
-                            if ($products) {
-                                $product_ids = array_merge($product_ids, array_keys($products));
-                            }
-                            break;
-                        case 'feature':
-                            $val = explode(':', $stock_product['value']);
-                            $feature_model = new shopFeatureModel();
-                            $feature = $feature_model->getById($val[0]);
-                            $feature_data = array($feature['code'] => $val[1]);
-                            $feature_collection = new shopProductsCollection();
-                            $feature_collection->filters($feature_data);
-                            $products = $feature_collection->getProducts('*', 0, 99999, true);
-                            if ($products) {
-                                $product_ids = array_merge($product_ids, array_keys($products));
-                            }
-                            break;
-                    }
-                }
-                $where = array();
-                if ($product_ids) {
-                    $where[] = "`id` IN (" . implode(',', array_unique($product_ids)) . ")";
-                }
-                if ($product_types) {
-                    $where[] = "`type_id` IN (" . implode(',', array_unique($product_types)) . ")";
-                }
-                if ($cache) {
-                    $cache->set($where);
-                }
-            }
-            if ($where) {
-                $collection->addWhere(implode(" OR ", $where));
-            } else {
-                $collection->addWhere("`id` IN (NULL)");
-            }
-            return true;
+        if (!$this->getSettings('status')) {
+            return false;
         }
+        $collection = $params['collection'];
+        $hash = $collection->getHash();
+        if ($hash[0] !== 'stock') {
+            return false;
+        }
+        $stock_id = $hash[1];
+
+        $collection->addWhere("`id` IN (SELECT `product_id` FROM `shop_stock_plugin_products_join` WHERE `stock_id` = '" . (int) $stock_id . "')");
+        return true;
     }
 
     public function sitemap($route) {
-        if ($this->getSettings('status') && $this->getSettings('stock_page')) {
-            $urls = array();
+        if (!($route_settings = self::isEnabled()) || empty($route_settings['stock_page']) || empty($route_settings['page_url'])) {
+            return;
+        }
+        $urls = array();
 
+        $urls[] = array(
+            'loc' => wa()->getRouteUrl('shop/frontend/stockList', true),
+            'changefreq' => waSitemapConfig::CHANGE_MONTHLY,
+            'priority' => 0.2
+        );
+        $stock_model = new shopStockPluginModel();
+        $stocks = $stock_model->getActiveStocks($route_settings['sort']);
+        foreach ($stocks as $stock) {
             $urls[] = array(
-                'loc' => wa()->getRouteUrl('shop/frontend/stockList', true),
+                'loc' => wa()->getRouteUrl('shop/frontend/stock', array('stock' => $stock['page_url']), true),
                 'changefreq' => waSitemapConfig::CHANGE_MONTHLY,
                 'priority' => 0.2
             );
-            $stock_model = new shopStockPluginModel();
-            $stocks = $stock_model->getActiveStocks();
-            foreach ($stocks as $stock) {
-                $urls[] = array(
-                    'loc' => wa()->getRouteUrl('shop/frontend/stock', array('stock' => $stock['page_url']), true),
-                    'changefreq' => waSitemapConfig::CHANGE_MONTHLY,
-                    'priority' => 0.2
-                );
-            }
-            return $urls;
         }
+        return $urls;
     }
 
     public function stockInfo($product_id) {

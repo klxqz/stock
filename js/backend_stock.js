@@ -44,7 +44,7 @@ $(function () {
     $('.delete-img').click(function () {
         $.ajax({
             type: 'POST',
-            url: '?plugin=stock&action=deleteStockImage',
+            url: '?plugin=stock&module=image&action=delete',
             data: {
                 img: $('input[name="stock[img]"]').val()
             },
@@ -85,9 +85,24 @@ $(function () {
         }
     });
 
+    $('input[name="stock[storefront][]"]').change(function () {
+        if ($(this).is(':checked')) {
+            if ($(this).val() == '0') {
+                $('input[name="stock[storefront][]"][value!=0]').removeAttr('checked');
+            } else {
+                $('input[name="stock[storefront][]"][value=0]').removeAttr('checked');
+            }
+        }
+    });
+
     var locked = false;
     function  transliterate() {
+        var loading = $('<i class="icon16 loading"></i>');
+        if (!$('input[name="stock[page_url]"]').next('i.loading').length) {
+            $('input[name="stock[page_url]"]').after(loading);
+        }
         $.get('?action=transliterate&str=' + $('input[name="stock[page_name]"]').val(), function (response) {
+            loading.remove();
             locked = false;
             if (response.status == 'ok') {
                 $('input[name="stock[page_url]"]').val(response.data).change();
@@ -100,17 +115,8 @@ $(function () {
         if (!$(this).val()) {
             is_transliterate = true;
         }
-        var url = frontend_url + page_url + $('input[name="stock[page_url]"]').val();
-        $('.stock-frontend-url').attr('href', url);
-        $('.stock-frontend-url').text(url);
     });
     $('input[name="stock[page_url]"]').change();
-
-    $('input[name="stock[page_url]"]').keyup(function () {
-        var url = frontend_url + page_url + $('input[name="stock[page_url]"]').val();
-        $('.stock-frontend-url').attr('href', url);
-        $('.stock-frontend-url').text(url);
-    });
 
     $('input[name="stock[page_name]"]').keyup(function () {
         if (is_transliterate && !locked) {
@@ -207,33 +213,7 @@ $(function () {
         return false;
     });
     $(document).on('click', '.delete-stock-products-button', function () {
-        var tr = $(this).closest('tr');
-        var id = tr.find('input[name="stock_products[id][]"]').val();
-        if (id) {
-            $.ajax({
-                type: 'POST',
-                url: '?plugin=stock&action=deleteStockProducts',
-                data: {
-                    id: id
-                },
-                dataType: 'json',
-                success: function (data, textStatus, jqXHR) {
-                    if (data.status == 'ok') {
-                        tr.remove();
-                    } else {
-                        alert(data.errors.join(', '));
-                    }
-                },
-                error: function (jqXHR, errorText) {
-                    $('#stock-form-status').html('');
-                    alert(jqXHR.responseText);
-                }
-            });
-        } else {
-            tr.remove();
-        }
-
-
+        $(this).closest('tr').remove();
         return false;
     });
 

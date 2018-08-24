@@ -24,31 +24,41 @@ class shopStockPluginBackendStockAction extends waViewAction {
                     $gift_sku = $this->view->assign('gift_product', $gift_product);
                 }
             }
-
-            $this->view->assign('stock', $stock);
-            $stock_products_model = new shopStockProductsPluginModel();
+            if (!empty($stock['params'])) {
+                $params = json_decode($stock['params'], true);
+                $rows = array();
+                foreach ($params as $key => $value) {
+                    $rows[] = "$key=$value";
+                }
+                $stock['params'] = implode("\n", $rows);
+            }
+            $stock_products_model = new shopStockPluginProductsModel();
             $stock_products = $stock_products_model->getByField('stock_id', $id, true);
             $stock_products = $this->prepareStockProducts($stock_products);
-            $this->view->assign('stock_products', $stock_products);
+
+            $stock_storefront = new shopStockPluginStorefrontModel();
+            $storefronts = $stock_storefront->getByField('stock_id', $stock['id'], true);
+            foreach ($storefronts as $storefront) {
+                $stock['storefront'][] = $storefront['route_hash'];
+            }
         }
 
         $set_model = new shopSetModel();
         $type_model = new shopTypeModel();
-        $lang = substr(wa()->getLocale(), 0, 2);
-        $def_currency = wa('shop')->getConfig()->getCurrency(true);
 
-        $app_settings_model = new waAppSettingsModel();
-        $page_url = $app_settings_model->get(shopStockPlugin::$plugin_id, 'page_url');
-
-        $this->view->assign('frontend_url', wa()->getRouteUrl('shop/frontend'));
-        $this->view->assign('page_url', $page_url);
-        $this->view->assign('lang', $lang);
-        $this->view->assign('sets', $set_model->getAll());
-        $this->view->assign('types', $type_model->getTypes());
-        $this->view->assign('categories', $this->getCategories());
-        $this->view->assign('def_currency', $def_currency);
-        $this->view->assign('features_filter', $this->getFeaturesFilter());
-        $this->view->assign('default_promocode', $this->generateCode());
+        $this->view->assign(array(
+            'stock' => ifset($stock),
+            'stock_products' => ifset($stock_products),
+            'lang' => substr(wa()->getLocale(), 0, 2),
+            'sets' => $set_model->getAll(),
+            'types' => $type_model->getTypes(),
+            'categories' => $this->getCategories(),
+            'def_currency' => wa('shop')->getConfig()->getCurrency(true),
+            'features_filter' => $this->getFeaturesFilter(),
+            'default_promocode' => $this->generateCode(),
+            'route_hashs' => shopStockHelper::getRouteHashs(),
+            'cron_str' => 'php ' . wa()->getConfig()->getRootPath() . '/cli.php shop StockPluginRun stock_id=' . ifset($stock['id']),
+        ));
     }
 
     protected function generateCode() {

@@ -49,22 +49,28 @@
 
             <p class="hint">Пример вывода срока действия акции:</p>
             <div class="geshifilter">
-                <pre>{ldelim}shopStockPlugin::getStockImageUrl({$stock.id}){rdelim}
-{ldelim}if $stock.restart{rdelim}
-    Акция проходит с {ldelim}$stock.period_begin|wa_datetime:"humandatetime"{rdelim} по {ldelim}$stock.period_end|wa_datetime:"humandatetime"{rdelim}
-{ldelim}else{rdelim}
-    Акция проходит с {ldelim}$stock.datetime_begin|wa_date{rdelim} по {ldelim}$stock.datetime_end|wa_date{rdelim}
-{ldelim}/if{rdelim}
+                <pre>
+                    {strip}<br/>
+                        {ldelim}shopStockPlugin::getStockImageUrl({$stock.id}){rdelim}<br/>
+                        {ldelim}if $stock.restart{rdelim}<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;Акция проходит с {ldelim}$stock.period_begin|wa_datetime:"humandatetime"{rdelim} по {ldelim}$stock.period_end|wa_datetime:"humandatetime"{rdelim}<br/>
+                        {ldelim}else{rdelim}<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;Акция проходит с {ldelim}$stock.datetime_begin|wa_date{rdelim} по {ldelim}$stock.datetime_end|wa_date{rdelim}<br/>
+                        {ldelim}/if{rdelim}
+                    {/strip}
                 </pre>
             </div>
-                
+
             <p class="hint">Пример вывода бонусов акции:</p>
             <div class="geshifilter">
-                <pre>{ldelim}shopStockPlugin::getStockImageUrl({$stock.id}){rdelim}
-{ldelim}if $stock.type == 'bonus'{rdelim}
-    {ldelim}shop_currency($stock.absolute_bonus){rdelim} - абсолютное значение начисляемых бонусов, за совершение заказа с акционным товаром
-    {ldelim}shop_currency($stock.product_percent_bonus){rdelim} - процент бонусов от стоимости акционного товара в заказе
-{ldelim}/if{rdelim}
+                <pre>
+                    {strip}<br/>
+                        {ldelim}shopStockPlugin::getStockImageUrl({$stock.id}){rdelim}<br/>
+                        {ldelim}if $stock.type == 'bonus'{rdelim}<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;{ldelim}shop_currency($stock.absolute_bonus){rdelim} - абсолютное значение начисляемых бонусов, за совершение заказа с акционным товаром<br/>
+                        &nbsp;&nbsp;&nbsp;&nbsp;{ldelim}shop_currency($stock.product_percent_bonus){rdelim} - процент бонусов от стоимости акционного товара в заказе<br/>
+                        {ldelim}/if{rdelim}<br/>
+                    {/strip}
                 </pre>
             </div>
         {/if}
@@ -77,6 +83,24 @@
                         <input type="hidden" name="stock[enabled]" value="0">
                         <input type="checkbox" id="ibutton-status" name="stock[enabled]" value="1"{if $stock.enabled|default:1} checked="checked"{/if}>
 
+                    </div>
+                </div>
+            </div>
+            <div class="field-group">
+                <div class="field">
+                    <div class="name">Витрины</div>
+                    <div class="value">
+                        <ul class="menu-v">
+                            <li>
+                                <input type="checkbox" name="stock[storefront][]" value="0" {if in_array('0', $stock.storefront|default:[])} checked="checked"{/if}/> Акция работает на всех витринах
+                            </li>
+                            {foreach $route_hashs as $route_url => $route_hash}
+                                <li>
+                                    <input type="checkbox" name="stock[storefront][]" value="{$route_hash}"{if in_array($route_hash, $stock.storefront|default:[])} checked="checked"{/if}/> {$route_url}
+                                </li>
+                            {/foreach}
+                        </ul>
+                        <p class="hint">Укажите витрины, на которых работает акция</p>
                     </div>
                 </div>
             </div>
@@ -103,7 +127,7 @@
                         </div>
                         <a class="delete-img" href="#"{if empty($stock) || !shopStockPlugin::getStockImageUrl($stock)} style="display:none;"{/if}><i class="icon16 delete"></i></a>
                         <input type="hidden" name="stock[img]" value="{$stock.img|default:''|escape}">
-                        <input type="file" class="fileupload" data-action="?plugin=stock&action=upload">
+                        <input type="file" class="fileupload" data-action="?plugin=stock&module=image&action=upload">
                         <div class="js-fileupload-progress" style="display:none;">
                             <i class="icon16 loading"></i><span><!-- upload progress handler --></span>
                         </div>
@@ -220,8 +244,8 @@
                         <input type="hidden" name="stock[period_begin]" value="0000-00-00 00:00:00" />
                         <input type="hidden" name="stock[period_end]" value="0000-00-00 00:00:00" />
                         <input type="hidden" name="stock[period_runing]" value="0" />
-                        
-                        
+
+
                         <input type="hidden" name="stock[restart]" value="0" />
                         <input type="checkbox" name="stock[restart]" value="1"{if $stock.restart|default:0} checked="checked"{/if} />
                     </div>
@@ -388,8 +412,7 @@
                                 {if !empty($stock_products)}
                                     {foreach $stock_products as $stock_product}
                                         <tr>
-                                            <td data-id="{$stock_product.id|escape}" data-type="{$stock_product.type|escape}" data-value="{$stock_product.value|escape}">
-                                                <input type="hidden" name="stock_products[id][]" value="{$stock_product.id|escape}" />
+                                            <td data-type="{$stock_product.type|escape}" data-value="{$stock_product.value|escape}">
                                                 <input type="hidden" name="stock_products[type][]" value="{$stock_product.type|escape}" />
                                                 <input type="hidden" name="stock_products[value][]" value="{$stock_product.value|escape}" />
 
@@ -421,7 +444,7 @@
                                                     <i class="icon16 {$icon}"></i>
                                                     {$type}
                                                     <strong>{$stock_product.name|escape}</strong>
-
+                                                    ({$stock_product.count|default:0})
                                                 </a>
                                                 <a class="delete-stock-products-button float-right" href="#"><i class="icon16 delete"></i></a>
                                             </td>
@@ -529,7 +552,24 @@
                     </div>
                     <div class="clear-left"></div>
                 </div>
+                {if !empty($stock)}
+                    <div class="field">
+                        <div class="value">
+                            <a class="stock-update" data-id="{$stock.id}" href="#"><i class="icon16 sync"></i>Обновить списки товаров участвующих в акции</a>
+                            <p class="hint">
+                                Формирование списка товаров участвующих в акции происходит при сохранение акции.<br/>
+                                Если в качестве товаров участвующих в акции вы выбрали, например, категорию товаров и после сохранения акции в данную категорию были добавлены новые товары,
+                                то эти товары могут автоматически не появиться среди товаров акции.<br/>
+                                Для актуализации списков товаров участвующих в акции необходимо выполнить обновление.
+                            </p>
+                            <p class="hint">Команда для запуска через CRON: <strong>{$cron_str}</strong> для обновления текущий акции</p>
+                        </div>
+                    </div>
+                {/if}
             </div>
+
+
+
 
             <div class="stock-page-settings">
                 <div class="field-group">
@@ -548,12 +588,6 @@
                         </div>
                         <div class="value">
                             <input class="long" type="text" name="stock[page_url]" value="{$stock.page_url|default:''|escape}" />
-                            {if !empty($stock.id)}
-                                <a class="stock-frontend-url" target="_blank" href="{$frontend_url}{$page_url}{$stock.page_url|default:''|escape}">
-                                    {$frontend_url}{$page_url}{$stock.page_url|default:''|escape}
-                                    <i class="icon10 new-window"></i>
-                                </a>
-                            {/if}
                         </div>
                     </div>
                     <div class="field">
@@ -599,6 +633,18 @@
                             </div>
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="name">
+                            Дополнительные параметры
+                        </div>
+                        <div class="value">
+                            <textarea name="stock[params]">{$stock.params|default:''|escape}</textarea>
+                            <p class="hint">
+                                Необязательный набор параметров вида key=value, к значениям которых можно обращаться в шаблонах как {ldelim}$stock.params.key{rdelim}.<br/>
+                                Каждая пара key=value должна быть указана на отдельной строке.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -621,7 +667,6 @@
     <script id="stock-product-tmpl" type="text/x-jquery-tmpl">
         <tr data-id="" data-type="${type}" data-value="${value}">
         <td>
-        <input type="hidden" name="stock_products[id][]" value="" />
         <input type="hidden" name="stock_products[type][]" value="${type}" />
         <input type="hidden" name="stock_products[value][]" value="${value}" />
 
@@ -638,7 +683,6 @@
     var wa_app = '{$wa_url}';
     var wa_url = '{$wa_url}';
     var wa_lang = '{$lang}';
-    var frontend_url = '{$frontend_url}';
     var page_url = '{$page_url}';
 </script>
 <script type="text/javascript" src="{$wa_app_static_url}plugins/stock/js/backend_stock.js?v={$wa->version()}"></script>

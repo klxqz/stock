@@ -1,0 +1,367 @@
+<div class="field-group">
+    <div class="field">
+        <div class="name">
+            Статус плагина для поселения
+        </div>
+        <div class="value no-shift s-ibutton-checkbox">
+            <input type="hidden" name="route_settings[status]" value="0">
+            <input type="checkbox" class="ibutton" name="route_settings[status]" value="1"{if $route_settings.status|default:0} checked{/if}>
+            <p class="hint">Чтобы плагин работал для выбранного поселения необходимо задать "ВКЛ"</p>
+        </div>
+    </div>
+</div>
+<div class="field-group">
+    <div class="field">
+        <div class="name">
+            Отдельная страница «Акции»
+        </div>
+        <div class="value no-shift s-ibutton-checkbox">
+            <input type="hidden" name="route_settings[stock_page]" value="0">
+            <input type="checkbox" id="ibutton-stock-page" name="route_settings[stock_page]" value="1"{if $route_settings.stock_page|default:'1'} checked{/if}>
+        </div>
+    </div>
+</div>
+
+<div class="field-group stock-page-settings"{if !$route_settings.stock_page|default:'1'} style="display:none;"{/if}>
+    <h2>Настройка страницы «Список акций»</h2>
+    <div class="field">
+        <div class="name">
+            URL страницы Акции
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[page_url]" value="{$route_settings.page_url|default:'stock/'|escape}" />
+            <p class="hint">
+                Для добавление ссылки «Акции» в информационное меню, можно создать категорию или информационную страницу с таким же адресом как «URL страницы Акции».<br/>
+                При одинаковых адресах URL плагина перекроет второй такой же адрес и при переходе по ссылке посетители будут попадать на страницу с акциями.
+            </p>
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Название страницы
+        </div>
+        <div class="value">
+            <input class="long" type="text" name="route_settings[page_name]" value="{$route_settings.page_name|default:'Акции'|escape}" />
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Заголовок страницы &lt;title&gt;
+        </div>
+        <div class="value">
+            <input class="long" type="text" name="route_settings[page_title]" value="{$route_settings.page_title|default:''|escape}" />
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Meta keywords
+        </div>
+        <div class="value">
+            <input class="long" type="text" name="route_settings[meta_keywords]" value="{$route_settings.meta_keywords|default:''|escape}" />
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Meta description
+        </div>
+        <div class="value">
+            <textarea name="route_settings[meta_description]">{$route_settings.meta_description|default:''|escape}</textarea>
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Порядок вывода акций на странице
+        </div>
+        <div class="value">
+            <input type="radio" name="route_settings[sort]" value="asc"{if $route_settings.sort|default:'asc' == 'asc'} checked="checked"{/if} /> - прямой
+            <input type="radio" name="route_settings[sort]" value="desc"{if $route_settings.sort|default:'asc' == 'desc'} checked="checked"{/if} /> - обратный
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Шаблон
+        </div>
+        <div class="value">
+            <input class="long" type="text" name="route_settings[page_template]" value="{$route_settings.page_template|default:'page.html'|escape}" />
+            <p class="hint">Шаблон темы дизайна, который использует плагин для вывода информации</p>
+        </div>
+    </div>
+
+    {$key = 'FrontendStockList'}
+    {$template = $templates[$key]}
+    <div class="field">
+        <div class="name">
+            {$template.name}<br /><span class="hint">HTML + Smarty</span>
+        </div>
+        <div class="value no-shift">
+            <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
+            <div class="template-block">
+                <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
+                {if $template.change_tpl}
+                    <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
+                    <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
+                {/if}
+            </div>
+            <p class="hint">Схема подключения шаблонов: Основным шаблоном является шаблон темы дизайна (по умолчанию page.html). В этот шаблон передается контент «Шаблон страницы акции»</p>
+        </div>
+    </div>
+    <div class="clear-both"></div>
+</div>
+
+<div class="field-group">
+    <h2>Настройка страницы акции</h2>
+    <p class="hint">URL страницы, Название страницы, Meta keywords и прочие параметры задаются в настройках каждой из акций. <a target="_blank" href="?action=products#/stockList/"><i class="icon16 ss pt gift"></i>Список всех акций</a></p>
+    <div class="field">
+        <div class="name">
+            Шаблон
+        </div>
+        <div class="value">
+            <input class="long" type="text" name="route_settings[stock_page_template]" value="{$route_settings.stock_page_template|default:'search.html'|escape}" />
+            <p class="hint">Шаблон темы дизайна, который использует плагин для вывода информации</p>
+        </div>
+    </div>
+    {$key = 'FrontendStock'}
+    {$template = $templates[$key]}
+    <div class="field">
+        <div class="name">
+            {$template.name}<br /><span class="hint">HTML + Smarty</span>
+        </div>
+        <div class="value no-shift">
+            <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
+            <div class="template-block">
+                <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
+                {if $template.change_tpl}
+                    <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
+                    <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
+                {/if}
+            </div>
+            <p class="hint">Схема подключения шаблонов: Основным шаблоном является шаблон темы дизайна (по умолчанию search.html). В этот шаблон передается контент «Шаблон страницы всех акций»</p>
+        </div>
+    </div>
+</div>
+
+<div class="field-group">
+    <h2>Настройка вывода подарков в корзине</h2>
+    <div class="field">
+        <div class="name">
+            Шаблон
+        </div>
+        <div class="value">
+            <input class="long" type="text" name="route_settings[cart_products_template]" value="{$route_settings.cart_products_template|default:'list-thumbs.html'|escape}" />
+            <p class="hint">
+                Шаблон темы дизайна, который использует плагин для вывода списка товаров.<br/>
+                В каждой теме дизайна для вывода товаров может использоваться свой шаблон. Чаще всего это шаблон <strong>list-thumbs.html</strong>.<br/>
+                Если такого шаблона нет в Вашей теме дизайна, можно подключить отдин из следующих шаблонов: <strong>products.list.html</strong> (дизайн «Удобная покупка»)
+            </p>
+        </div>
+    </div>
+    {$key = 'FrontendCart'}
+    {$template = $templates[$key]}
+    <div class="field">
+        <div class="name">
+            {$template.name}<br /><span class="hint">HTML + Smarty</span>
+        </div>
+        <div class="value no-shift">
+            <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
+            <div class="template-block">
+                <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
+                {if $template.change_tpl}
+                    <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
+                    <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
+                {/if}
+            </div>
+        </div>
+    </div>
+    <div class="clear-both"></div>
+</div>
+
+
+<div class="field-group">
+    <h2>Краткая информация об акции</h2>
+    <div class="field">
+        <div class="name">
+            Место вывода на странице товара
+        </div>
+        <div class="value">
+            <select name="route_settings[frontend_product_output]">
+                <option {if $route_settings.frontend_product_output|default:'block_aux' == ''} selected{/if} value="">Не выводить</option>
+                <option {if $route_settings.frontend_product_output|default:'block_aux' == 'menu'} selected{/if} value="menu">Содержимое, добавляемое рядом со ссылками на дополнительные страницы товара (frontend_product.menu)</option>
+                <option {if $route_settings.frontend_product_output|default:'block_aux' == 'cart'} selected{/if} value="cart">Содержимое, добавляемое рядом с кнопкой «В корзину» (frontend_product.cart)</option>
+                <option {if $route_settings.frontend_product_output|default:'block_aux' == 'block_aux'} selected{/if} value="block_aux">Блок дополнительной информации в боковой части страницы (frontend_product.block_aux)</option>
+                <option {if $route_settings.frontend_product_output|default:'block_aux' == 'block'} selected{/if} value="block">Блок дополнительной информации в основной части описания товара (frontend_product.block)</option>
+            </select>
+            <p class="hint">
+                Для вывода используется хук темы дизайна <strong>frontend_product</strong>.<br/>
+                <strong>{ldelim}shopStockPlugin::display($stock_id){rdelim}</strong> - хелпер вывода акции в произвольном месте, где $stock_id - идентификатор акции
+            </p>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="name">
+            Вывод на странице категории
+        </div>
+        <div class="value">
+            <input type="hidden" name="route_settings[frontend_category_output]" value="0" />
+            <input type="checkbox"{if $route_settings.frontend_category_output|default:1} checked="checked"{/if} name="route_settings[frontend_category_output]" value="1" />
+            <p class="hint">
+                На странице категории товаров осуществляется вывод только тех акций, у которых среди товаров акции задана соответствующая категория.<br/>
+                Для вывода используется хук темы дизайна <strong>frontend_category</strong>.<br/>
+                <strong>{ldelim}shopStockPlugin::display($stock_id){rdelim}</strong> - хелпер вывода акции в произвольном месте, где $stock_id - идентификатор акции
+            </p>
+        </div>
+    </div>
+
+    {$key = 'Stock'}
+    {$template = $templates[$key]}
+    <div class="field">
+        <div class="name">
+            {$template.name}<br /><span class="hint">HTML + Smarty</span>
+        </div>
+        <div class="value no-shift">
+            <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
+            <div class="template-block">
+                <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
+                {if $template.change_tpl}
+                    <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
+                    <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
+                {/if}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="field-group">
+    <h2>Настройки таймера</h2>
+
+    <div class="field">
+        <div class="name">
+            Верхний диапазон
+        </div>
+        <div class="value">
+            <select name="route_settings[countdown_range_hi]">
+                <option{if $route_settings.countdown_range_hi|default:'day' == 'minute'} selected="selected"{/if} value="minute">Минуты</option>
+                <option{if $route_settings.countdown_range_hi|default:'day' == 'hour'} selected="selected"{/if} value="hour">Часы</option>
+                <option{if $route_settings.countdown_range_hi|default:'day' == 'day'} selected="selected"{/if} value="day">Дни</option>
+                <option{if $route_settings.countdown_range_hi|default:'day' == 'month'} selected="selected"{/if} value="month">Месяцы</option>
+                <option{if $route_settings.countdown_range_hi|default:'day' == 'year'} selected="selected"{/if} value="year">Годы</option>
+            </select>
+            <p class="hint">Наибольшее единицу времени для отображения</p>
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Ширина
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_width]" value="{$route_settings.countdown_width|default:''|escape}" class="short" />
+            <p class="hint">Значение в пикселях. Если значение не задано, ширина определяется автоматически</p>
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Высота
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_height]" value="{$route_settings.countdown_height|default:''|escape}" class="short" />
+            <p class="hint">Значение в пикселях. Если значение не задано, высота определяется автоматически</p>
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Стиль
+        </div>
+        <div class="value">
+            <input type="radio" name="route_settings[countdown_style]"{if $route_settings.countdown_style|default:'boring' == 'flip'} checked="checked"{/if} value="flip"/> - flip
+            <input type="radio" name="route_settings[countdown_style]"{if $route_settings.countdown_style|default:'boring' == 'boring'} checked="checked"{/if} value="boring"/> - boring
+            <p class="hint">flip - анимированные цифры с использованием изображений<br/>boring - без анимации</p>
+        </div>
+    </div>
+    <div class="field only-boring">
+        <div class="name">
+            Скрывать линии
+        </div>
+        <div class="value">
+            <input type="hidden" name="route_settings[countdown_hide_line]" value="false" />
+            <input type="checkbox" {if $route_settings.countdown_hide_line|default:'false' == 'true'}checked="checked"{/if} name="route_settings[countdown_hide_line]" value="true" />
+            <p class="hint">Если "Да", скрываются черные линии посередине цифр. Не работает со стилем "flip"</p>
+        </div>
+    </div>
+    <div class="field">
+        <div class="name">
+            Скрывать подписи счетчиков
+        </div>
+        <div class="value">
+            <input type="hidden" name="route_settings[countdown_hide_labels]" value="false" />
+            <input type="checkbox"{if $route_settings.countdown_hide_labels|default:'false' == 'true'} checked="checked"{/if} name="route_settings[countdown_hide_labels]" value="true" />
+            <p class="hint">Скрывать подписи счетчиков: Дни, Часы, Минуты, Секунды</p>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="name">
+            Текст подписей счетчиков.
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_second_text]" value="{$route_settings.countdown_second_text|default:'Секунды'|escape}" class="short" />
+            <p class="hint">Секунды</p>
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_minute_text]" value="{$route_settings.countdown_minute_text|default:'Минуты'|escape}" class="short" />
+            <p class="hint">Минуты</p>
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_hour_text]" value="{$route_settings.countdown_hour_text|default:'Часы'|escape}" class="short" />
+            <p class="hint">Часы</p>
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_day_text]" value="{$route_settings.countdown_day_text|default:'Дни'|escape}" class="short" />
+            <p class="hint">Дни</p>
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_month_text]" value="{$route_settings.countdown_month_text|default:'Месяцы'|escape}" class="short" />
+            <p class="hint">Месяцы</p>
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_year_text]" value="{$route_settings.countdown_year_text|default:'Годы'|escape}" class="short" />
+            <p class="hint">Годы</p>
+        </div>
+    </div>
+
+    <div class="field only-boring">
+        <div class="name">
+            Цвет счетчиков
+        </div>
+        <div class="value">
+            <p class="hint">Настройки цвета доступны только при стиле "boring"</p>
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_numbers_color]" value="{$route_settings.countdown_numbers_color|default:'#FFFFFF'|escape}" class="short color" />
+            <p class="hint">Цвет цифр</p>
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_numbers_bkgd]" value="{$route_settings.countdown_numbers_bkgd|default:'#365D8B'|escape}" class="short color" />
+            <p class="hint">Цвет фона</p>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="name">
+            Цвет подписей
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_labels_color]" value="{$route_settings.countdown_labels_color|default:'#000000'|escape}" class="short color" />
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="name">
+            Размер подписей
+        </div>
+        <div class="value">
+            <input type="text" name="route_settings[countdown_labels_size]" value="{$route_settings.countdown_labels_size|default:'0.7'|escape}" class="short" />
+            <p class="hint">Процент от исходного размера: 1 - 100% размер шрифта, 0.5 - 50% размера шрифта.</p>
+        </div>
+    </div>
+</div>

@@ -32,6 +32,7 @@ return array(
         'meta_keywords' => array('varchar', 255, 'null' => 0, 'default' => ''),
         'meta_description' => array('varchar', 255, 'null' => 0, 'default' => ''),
         'page_content' => array('text', 'null' => 0),
+        'params' => array('text', 'null' => 0),
         'badge' => array('varchar', 32, 'null' => 0, 'default' => ''),
         'badge_code' => array('text', 'null' => 0),
         'multiple_badges' => array('tinyint', 1, 'null' => 0, 'default' => '0'),
@@ -42,14 +43,29 @@ return array(
             'datetime_end' => 'datetime_end',
         ),
     ),
-    'shop_stock_products_plugin' => array(
-        'id' => array('int', 11, 'null' => 0, 'autoincrement' => 1),
+    'shop_stock_plugin_products' => array(
         'stock_id' => array('int', 11, 'null' => 0),
         'type' => array('enum', "'product','set','category','type','feature'", 'null' => 0, 'default' => 'product'),
         'value' => array('varchar', 64, 'null' => 0, 'default' => ''),
+        'count' => array('int', 11, 'null' => 0, 'default' => '0'),
         ':keys' => array(
-            'PRIMARY' => array('id'),
             'stock_id' => 'stock_id',
+        ),
+    ),
+    'shop_stock_plugin_products_join' => array(
+        'stock_id' => array('int', 11, 'null' => 0),
+        'product_id' => array('int', 11, 'null' => 0),
+        ':keys' => array(
+            'stock_id' => 'stock_id',
+            'product_id' => 'product_id',
+        ),
+    ),
+    'shop_stock_plugin_storefront' => array(
+        'stock_id' => array('int', 11, 'null' => 0),
+        'route_hash' => array('varchar', 32, 'null' => 0, 'default' => ''),
+        ':keys' => array(
+            'stock_id' => 'stock_id',
+            'route_hash' => 'route_hash',
         ),
     ),
 );

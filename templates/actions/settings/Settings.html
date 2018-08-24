@@ -39,16 +39,25 @@
         margin: 5px 0;
         font-weight: bold;
     }
+    .field-group.fixed{
+        width: calc(100% - 253px);
+        position: fixed;
+        background: #fff;
+        z-index: 99;
+        margin: 0;
+        bottom: 0;
+    }
 </style>
-<h1>Акции</h1>
+{$settings = $plugin->getSettings()}
+<h1>{$plugin->getName()}</h1>
 
 <ul class="plugin-menu">
-    <li><a href="mailto:support@wa-plugins.ru"><i class="icon16 ss pt hammer"></i>Поддержка</a></li>
+    <li><a href="http://support.wa-plugins.ru/"><i class="icon16 ss pt hammer"></i>Поддержка</a></li>
 </ul>
 
 
 <div class="fields form">
-    <form action="?plugin=stock&module=settings&action=save" method="post" id="plugins-settings-form">
+    <form action="?module=plugins&id=stock&action=save" method="post" id="plugins-settings-form">
         {$wa->csrf()}
         <div class="field-group">
             <div class="field">
@@ -77,378 +86,50 @@
         </div>
 
 
-        <div class="field-group"{if !$settings.status} style="display:none"{/if}>
+        <div class="field-group"{if !$settings.status|default:0} style="display:none"{/if}>
             <div class="field">
                 <div class="name">
-                    Отдельная страница «Акции»
-                </div>
-                <div class="value no-shift s-ibutton-checkbox">
-                    <input type="hidden" name="shop_stock[stock_page]" value="0">
-                    <input type="checkbox" id="ibutton-stock-page" name="shop_stock[stock_page]" value="1"{if $settings.stock_page|default:'1'} checked{/if}>
-                </div>
-            </div>
-        </div>
-
-        <div class="field-group stock-page-settings"{if !$settings.status && $settings.stock_page|default:1} style="display:none"{/if}>
-            <h2>Настройка страницы «Список акций»</h2>
-            <div class="field">
-                <div class="name">
-                    URL страницы Акции
+                    Выберите поселение
                 </div>
                 <div class="value">
-                    <input type="text" name="shop_stock[page_url]" value="{$settings.page_url|default:'stock/'|escape}" />
-                    <p class="hint">
-                        Для добавление ссылки «Акции» в информационное меню, можно создать категорию или информационную страницу с таким же адресом как «URL страницы Акции».<br/>
-                        При одинаковых адресах URL плагина перекроет второй такой же адрес и при переходе по ссылке посетители будут попадать на страницу с акциями.
-                    </p>
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Название страницы
-                </div>
-                <div class="value">
-                    <input class="long" type="text" name="shop_stock[page_name]" value="{$settings.page_name|default:'Акции'|escape}" />
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Заголовок страницы &lt;title&gt;
-                </div>
-                <div class="value">
-                    <input class="long" type="text" name="shop_stock[page_title]" value="{$settings.page_title|default:''|escape}" />
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Meta keywords
-                </div>
-                <div class="value">
-                    <input class="long" type="text" name="shop_stock[meta_keywords]" value="{$settings.meta_keywords|default:''|escape}" />
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Meta description
-                </div>
-                <div class="value">
-                    <textarea name="shop_stock[meta_description]">{$settings.meta_description|default:''|escape}</textarea>
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Порядок вывода акций на странице
-                </div>
-                <div class="value">
-                    <input type="radio" name="shop_stock[sort]" value="asc"{if $settings.sort|default:'asc' == 'asc'} checked="checked"{/if} /> - прямой
-                    <input type="radio" name="shop_stock[sort]" value="desc"{if $settings.sort|default:'asc' == 'desc'} checked="checked"{/if} /> - обратный
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Шаблон
-                </div>
-                <div class="value">
-                    <input class="long" type="text" name="shop_stock[page_template]" value="{$settings.page_template|default:'page.html'|escape}" />
-                    <p class="hint">Шаблон темы дизайна, который использует плагин для вывода информации</p>
-                </div>
-            </div>
-
-            {$key = 'FrontendStockList'}
-            {$template = $templates[$key]}
-            <div class="field">
-                <div class="name">
-                    {$template.name}<br /><span class="hint">HTML + Smarty</span>
-                </div>
-                <div class="value no-shift">
-                    <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
-                    <div class="template-block">
-                        <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
-                        {if $template.change_tpl}
-                            <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
-                            <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
-                        {/if}
-                    </div>
-                    <p class="hint">Схема подключения шаблонов: Основным шаблоном является шаблон темы дизайна (по умолчанию page.html). В этот шаблон передается контент «Шаблон страницы акции»</p>
-                </div>
-            </div>
-            <div class="clear-both"></div>
-        </div>
-
-        <div class="field-group"{if !$settings.status} style="display:none"{/if}>
-            <h2>Настройка страницы акции</h2>
-            <p class="hint">URL страницы, Название страницы, Meta keywords и прочие параметры задаются в настройках каждой из акций. <a target="_blank" href="?action=products#/stockList/"><i class="icon16 ss pt gift"></i>Список всех акций</a></p>
-            <div class="field">
-                <div class="name">
-                    Шаблон
-                </div>
-                <div class="value">
-                    <input class="long" type="text" name="shop_stock[stock_page_template]" value="{$settings.stock_page_template|default:'search.html'|escape}" />
-                    <p class="hint">Шаблон темы дизайна, который использует плагин для вывода информации</p>
-                </div>
-            </div>
-            {$key = 'FrontendStock'}
-            {$template = $templates[$key]}
-            <div class="field">
-                <div class="name">
-                    {$template.name}<br /><span class="hint">HTML + Smarty</span>
-                </div>
-                <div class="value no-shift">
-                    <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
-                    <div class="template-block">
-                        <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
-                        {if $template.change_tpl}
-                            <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
-                            <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
-                        {/if}
-                    </div>
-                    <p class="hint">Схема подключения шаблонов: Основным шаблоном является шаблон темы дизайна (по умолчанию search.html). В этот шаблон передается контент «Шаблон страницы всех акций»</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="field-group"{if !$settings.status} style="display:none"{/if}>
-            <h2>Настройка вывода подарков в корзине</h2>
-            <div class="field">
-                <div class="name">
-                    Шаблон
-                </div>
-                <div class="value">
-                    <input class="long" type="text" name="shop_stock[cart_products_template]" value="{$settings.cart_products_template|default:'list-thumbs.html'|escape}" />
-                    <p class="hint">
-                        Шаблон темы дизайна, который использует плагин для вывода списка товаров.<br/>
-                        В каждой теме дизайна для вывода товаров может использоваться свой шаблон. Чаще всего это шаблон <strong>list-thumbs.html</strong>.<br/>
-                        Если такого шаблона нет в Вашей теме дизайна, можно подключить отдин из следующих шаблонов: <strong>products.list.html</strong> (дизайн «Удобная покупка»)
-                    </p>
-                </div>
-            </div>
-            {$key = 'FrontendCart'}
-            {$template = $templates[$key]}
-            <div class="field">
-                <div class="name">
-                    {$template.name}<br /><span class="hint">HTML + Smarty</span>
-                </div>
-                <div class="value no-shift">
-                    <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
-                    <div class="template-block">
-                        <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
-                        {if $template.change_tpl}
-                            <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
-                            <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
-                        {/if}
-                    </div>
-                </div>
-            </div>
-            <div class="clear-both"></div>
-        </div>
-
-
-        <div class="field-group"{if !$settings.status} style="display:none"{/if}>
-            <h2>Краткая информация об акции</h2>
-            <div class="field">
-                <div class="name">
-                    Место вывода на странице товара
-                </div>
-                <div class="value">
-                    <select name="shop_stock[frontend_product_output]">
-                        <option {if $settings.frontend_product_output|default:'block_aux' == ''} selected{/if} value="">Не выводить</option>
-                        <option {if $settings.frontend_product_output|default:'block_aux' == 'menu'} selected{/if} value="menu">Содержимое, добавляемое рядом со ссылками на дополнительные страницы товара (frontend_product.menu)</option>
-                        <option {if $settings.frontend_product_output|default:'block_aux' == 'cart'} selected{/if} value="cart">Содержимое, добавляемое рядом с кнопкой «В корзину» (frontend_product.cart)</option>
-                        <option {if $settings.frontend_product_output|default:'block_aux' == 'block_aux'} selected{/if} value="block_aux">Блок дополнительной информации в боковой части страницы (frontend_product.block_aux)</option>
-                        <option {if $settings.frontend_product_output|default:'block_aux' == 'block'} selected{/if} value="block">Блок дополнительной информации в основной части описания товара (frontend_product.block)</option>
+                    <select name="route_hash" id="route-selector">
+                        <option value="0">Общие настройки для всех поселений</option>
+                        {foreach $route_hashs as $route_url => $route_hash}
+                            <option value="{$route_hash}"{if $route_hash == $settings.route_hash|default:0} selected="selected"{/if}>{$route_url}</option>
+                        {/foreach}
                     </select>
-                    <p class="hint">
-                        Для вывода используется хук темы дизайна <strong>frontend_product</strong>.<br/>
-                        <strong>{ldelim}shopStockPlugin::display($stock_id){rdelim}</strong> - хелпер вывода акции в произвольном месте, где $stock_id - идентификатор акции
-                    </p>
-                </div>
-            </div>
 
-            <div class="field">
-                <div class="name">
-                    Вывод на странице категории
-                </div>
-                <div class="value">
-                    <input type="hidden" name="shop_stock[frontend_category_output]" value="0" />
-                    <input type="checkbox"{if $settings.frontend_category_output|default:1} checked="checked"{/if} name="shop_stock[frontend_category_output]" value="1" />
-                    <p class="hint">
-                        На странице категории товаров осуществляется вывод только тех акций, у которых среди товаров акции задана соответствующая категория.<br/>
-                        Для вывода используется хук темы дизайна <strong>frontend_category</strong>.<br/>
-                        <strong>{ldelim}shopStockPlugin::display($stock_id){rdelim}</strong> - хелпер вывода акции в произвольном месте, где $stock_id - идентификатор акции
-                    </p>
-                </div>
-            </div>
-
-            {$key = 'Stock'}
-            {$template = $templates[$key]}
-            <div class="field">
-                <div class="name">
-                    {$template.name}<br /><span class="hint">HTML + Smarty</span>
-                </div>
-                <div class="value no-shift">
-                    <a class="edit-template" href="#"><i class="icon16 edit"></i>Изменить шаблон</a>
-                    <div class="template-block">
-                        <textarea id="sf-template-{$key}"  class="body" name="templates[{$key}][template]">{$template.template|escape}</textarea>
-                        {if $template.change_tpl}
-                            <p class="gray"><i class="icon16 exclamation"></i>Внимание! Шаблон по умолчанию был изменен</p>
-                            <input type="checkbox" name="templates[{$key}][reset_tpl]" value="1"  /> - Сбросить изменения, использовать шаблон по умолчанию
-                        {/if}
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="field-group"{if !$settings.status} style="display:none"{/if}>
-            <h2>Настройки таймера</h2>
-
-            <div class="field">
-                <div class="name">
-                    Верхний диапазон
-                </div>
-                <div class="value">
-                    <select name="shop_stock[countdown_range_hi]">
-                        <option{if $settings.countdown_range_hi|default:'day' == 'minute'} selected="selected"{/if} value="minute">Минуты</option>
-                        <option{if $settings.countdown_range_hi|default:'day' == 'hour'} selected="selected"{/if} value="hour">Часы</option>
-                        <option{if $settings.countdown_range_hi|default:'day' == 'day'} selected="selected"{/if} value="day">Дни</option>
-                        <option{if $settings.countdown_range_hi|default:'day' == 'month'} selected="selected"{/if} value="month">Месяцы</option>
-                        <option{if $settings.countdown_range_hi|default:'day' == 'year'} selected="selected"{/if} value="year">Годы</option>
-                    </select>
-                    <p class="hint">Наибольшее единицу времени для отображения</p>
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Ширина
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_width]" value="{$settings.countdown_width|default:''|escape}" class="short" />
-                    <p class="hint">Значение в пикселях. Если значение не задано, ширина определяется автоматически</p>
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Высота
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_height]" value="{$settings.countdown_height|default:''|escape}" class="short" />
-                    <p class="hint">Значение в пикселях. Если значение не задано, высота определяется автоматически</p>
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Стиль
-                </div>
-                <div class="value">
-                    <input type="radio" name="shop_stock[countdown_style]"{if $settings.countdown_style|default:'boring' == 'flip'} checked="checked"{/if} value="flip"/> - flip
-                    <input type="radio" name="shop_stock[countdown_style]"{if $settings.countdown_style|default:'boring' == 'boring'} checked="checked"{/if} value="boring"/> - boring
-                    <p class="hint">flip - анимированные цифры с использованием изображений<br/>boring - без анимации</p>
-                </div>
-            </div>
-            <div class="field only-boring">
-                <div class="name">
-                    Скрывать линии
-                </div>
-                <div class="value">
-                    <input type="hidden" name="shop_stock[countdown_hide_line]" value="false" />
-                    <input type="checkbox" {if $settings.countdown_hide_line|default:'false' == 'true'}checked="checked"{/if} name="shop_stock[countdown_hide_line]" value="true" />
-                    <p class="hint">Если "Да", скрываются черные линии посередине цифр. Не работает со стилем "flip"</p>
-                </div>
-            </div>
-            <div class="field">
-                <div class="name">
-                    Скрывать подписи счетчиков
-                </div>
-                <div class="value">
-                    <input type="hidden" name="shop_stock[countdown_hide_labels]" value="false" />
-                    <input type="checkbox"{if $settings.countdown_hide_labels|default:'false' == 'true'} checked="checked"{/if} name="shop_stock[countdown_hide_labels]" value="true" />
-                    <p class="hint">Скрывать подписи счетчиков: Дни, Часы, Минуты, Секунды</p>
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="name">
-                    Текст подписей счетчиков.
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_second_text]" value="{$settings.countdown_second_text|default:'Секунды'|escape}" class="short" />
-                    <p class="hint">Секунды</p>
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_minute_text]" value="{$settings.countdown_minute_text|default:'Минуты'|escape}" class="short" />
-                    <p class="hint">Минуты</p>
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_hour_text]" value="{$settings.countdown_hour_text|default:'Часы'|escape}" class="short" />
-                    <p class="hint">Часы</p>
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_day_text]" value="{$settings.countdown_day_text|default:'Дни'|escape}" class="short" />
-                    <p class="hint">Дни</p>
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_month_text]" value="{$settings.countdown_month_text|default:'Месяцы'|escape}" class="short" />
-                    <p class="hint">Месяцы</p>
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_year_text]" value="{$settings.countdown_year_text|default:'Годы'|escape}" class="short" />
-                    <p class="hint">Годы</p>
-                </div>
-            </div>
-
-            <div class="field only-boring">
-                <div class="name">
-                    Цвет счетчиков
-                </div>
-                <div class="value">
-                    <p class="hint">Настройки цвета доступны только при стиле "boring"</p>
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_numbers_color]" value="{$settings.countdown_numbers_color|default:'#FFFFFF'|escape}" class="short color" />
-                    <p class="hint">Цвет цифр</p>
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_numbers_bkgd]" value="{$settings.countdown_numbers_bkgd|default:'#365D8B'|escape}" class="short color" />
-                    <p class="hint">Цвет фона</p>
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="name">
-                    Цвет подписей
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_labels_color]" value="{$settings.countdown_labels_color|default:'#000000'|escape}" class="short color" />
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="name">
-                    Размер подписей
-                </div>
-                <div class="value">
-                    <input type="text" name="shop_stock[countdown_labels_size]" value="{$settings.countdown_labels_size|default:'0.7'|escape}" class="short" />
-                    <p class="hint">Процент от исходного размера: 1 - 100% размер шрифта, 0.5 - 50% размера шрифта.</p>
                 </div>
             </div>
         </div>
-        <div class="field"{if !$settings.status} style="display:none"{/if}>
-            <div class="value submit">
-                <input type="submit" class="button green" value="Сохранить">
-                <span id="plugins-settings-form-status" style="display:none">
-                    <i style="vertical-align:middle" class="icon16 yes"></i> [`Saved`]
-                </span>
+
+
+        <div class="field-group"{if !$settings.status|default:0} style="display:none"{/if}>
+            <div class="route-container block double-padded">
+
+            </div>
+        </div>
+
+
+        <div class="field-group submit"{if !$settings.status} style="display:none;"{/if}>
+            <div class="field">
+                <div class="value">
+                    <input type="submit" class="button green" value="Сохранить">
+                    <span id="plugins-settings-form-status" style="display:none">
+                        <i style="vertical-align:middle" class="icon16 yes"></i> [`Saved`]
+                    </span>
+                </div>
             </div>
         </div>
 
         <div class="field-group"{if !$settings.status} style="display:none;"{/if}>
             <p>
-                <a class="helpers-button" href="#">
+                <a class="helper-link" href="#">
                     <i class="icon16 cheatsheet"></i><b><i>Шпаргалка</i></b>
-                    <i class="icon10 darr no-overhanging"></i>
+                    <i class="icon10 darr-tiny no-overhanging"></i>
                 </a>
             </p>
-            <div class="helpers" style="display:none;">
+            <div class="help-content" style="display:none;">
                 <h2>Хелперы</h2>
                 {literal}
                     <p><strong>{shopStockPlugin::display($stock_id)}</strong> - хелпер вывода акции, где $stock_id - идентификатор акции</p>
@@ -499,111 +180,20 @@
 
 
 </div>
+
+{$tpls = []}
+{foreach $templates as $key => $template}
+    {$mode = $template.tpl_ext}
+    {if $template.tpl_ext == 'js'}
+        {$mode = 'javascript'}
+    {/if}
+    {$tpls[] = ['id' => "sf-template-`$key`", 'mode' => $mode]}
+{/foreach}
+<script type="text/javascript" src="{$wa_app_static_url}plugins/stock/js/settings.js?{$plugin->getVersion()}"></script>
 <script type="text/javascript">
     $(function () {
-        $('.helpers-button').click(function () {
-            $('.helpers').toggle('slow');
-            return false;
-        });
-
-        $('input[name="shop_stock[countdown_style]"]').change(function () {
-            if ($('input[name="shop_stock[countdown_style]"]:checked').val() == 'boring') {
-                $('.only-boring').show();
-            } else {
-                $('.only-boring').hide();
-            }
-        });
-        $('input[name="shop_stock[countdown_style]"]').change();
-    {$tpls = []}
-    {foreach $templates as $key => $template}
-        {$count = array_push($tpls, "'sf-template-`$key`'")}
-    {/foreach}
-        var ids = [{implode(',', $tpls)}];
-        for (var i = 0; i < ids.length; i++) {
-            var c = CodeMirror.fromTextArea(document.getElementById(ids[i]), {
-                mode: "text/html",
-                tabMode: "indent",
-                height: "dynamic",
-                lineWrapping: true
-            });
-            $(ids[i]).change(function () {
-                c.setValue($(this).val())
-            });
-            $(ids[i]).submit(function () {
-                var f = $(this);
-                $.post(f.attr('action'), f.serialize(), function (response) {
-                    if (response.status == 'ok') {
-                        $('#wa-design-button').removeClass('red').addClass('green');
-                        $("#wa-editor-status-fail").hide()
-                        $("#wa-editor-status-ok span").html(response.data.message);
-                        $("#wa-editor-status-ok").fadeIn('slow', function () {
-                            $(this).fadeOut(1000);
-                        });
-                    } else {
-                        $('#wa-design-button').removeClass('green').addClass('red');
-                        $("#wa-editor-status-ok").hide();
-                        $("#wa-editor-status-fail span").html(response.errors.join(', '));
-                        $("#wa-editor-status-fail").fadeIn('slow');
-                    }
-                }, "json")
-                return false;
-            });
-        }
-        $('.template-block').hide();
-        $('.edit-template').click(function () {
-            $(this).closest('.field').find('.template-block').toggle('slow');
-            return false;
-        });
-
-        $('.color').each(function () {
-            var input = $(this);
-            var replacer = $('<span class="color-replacer">' +
-                    '<i class="icon16 color" style="background: #' + input.val().substr(1) + '"></i>' +
-                    '</span>').insertAfter(input);
-            var picker = $('<div style="display:none;" class="color-picker"></div>').
-                    insertAfter(replacer);
-            var farbtastic = $.farbtastic(picker, function (color) {
-                replacer.find('i').css('background', color);
-                input.val(color);
-            });
-            farbtastic.setColor('#' + input.val());
-            replacer.click(function () {
-                picker.slideToggle(200);
-                return false;
-            });
-            var timer_id;
-            input.unbind('keydown').bind('keydown', function () {
-                if (timer_id) {
-                    clearTimeout(timer_id);
-                }
-                timer_id = setTimeout(function () {
-                    farbtastic.setColor(input.val());
-                }, 250);
-            });
-        });
-        $('#ibutton-status').iButton({
-            labelOn: "", labelOff: "", className: 'mini'
-        }).change(function () {
-            var self = $(this);
-            var enabled = self.is(':checked');
-            if (enabled) {
-                self.closest('.field-group').siblings().show(200);
-            } else {
-                self.closest('.field-group').siblings().hide(200);
-            }
-            var f = $("#plugins-settings-form");
-            $.post(f.attr('action'), f.serialize());
-        });
-        $('#ibutton-stock-page').iButton({
-            labelOn: "", labelOff: "", className: 'mini'
-        }).change(function () {
-            var self = $(this);
-            var enabled = self.is(':checked');
-            if (enabled) {
-                $('.stock-page-settings').show(200);
-            } else {
-                $('.stock-page-settings').hide(200);
-            }
+        $.stock_settings.init({
+            templates: {json_encode($tpls)}
         });
     });
 </script>

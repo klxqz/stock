@@ -1,6 +1,6 @@
 <?php
 
-class shopStockPluginBackendDeleteStockImageController extends waJsonController {
+class shopStockPluginImageDeleteController extends waJsonController {
 
     public function execute() {
         try {

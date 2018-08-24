@@ -1,17 +1,40 @@
 <div class="block double-padded">
     <h1>
         Акции
-        <a target="_blank" href="{$frontend_url}{$page_url}">
-            {$frontend_url}{$page_url}
-            <i class="icon10 new-window"></i>
-        </a>
     </h1>
     <ul class="menu-h">
         <li><a href="#/stock/add/"><i class="icon16 add"></i>Новая акция</a></li>
         <li><a href="?action=plugins#/stock/"><i class="icon16 ss settings-bw"></i>Настройки плагина</a></li>
     </ul>
 
-    <table class="zebra">
+    <div  class="fields form">   
+        <div class="field-group">
+            <div class="field">
+                <div class="name">Витрина</div>
+                <div class="value">
+                    <select name="route_hash">
+                        <option value="0"{if '0' == $route_hash|default:'0'} selected="selected"{/if}>Все витрины</option>
+                        {foreach $route_hashs as $route_url => $_route_hash}
+                            <option value="{$_route_hash}"{if $_route_hash == $route_hash|default:'0'} selected="selected"{/if}>{$route_url}</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="field">
+            <div class="value">
+                <a class="stock-update" href="#"><i class="icon16 sync"></i>Обновить списки товаров участвующих в акциях</a>
+                <p class="hint">
+                    Формирование списка товаров участвующих в акции происходит при сохранение акции.<br/>
+                    Если в качестве товаров участвующих в акции вы выбрали, например, категорию товаров и после сохранения акции в данную категорию были добавлены новые товары,
+                    то эти товары могут автоматически не появиться среди товаров акции.<br/>
+                    Для актуализации списков товаров участвующих в акции необходимо выполнить обновление.
+                </p>
+                <p class="hint">Команда для запуска через CRON: <strong>{$cron_str}</strong> для обновления всех акций</p>
+            </div>
+        </div>
+    </div>
+    <table id="stock-table" class="zebra">
         <thead>
             <tr>
                 <th>Статус</th>
@@ -88,7 +111,7 @@
 
 <script type="text/javascript">
     $(function () {
-        $('.stock-delete').click(function () {
+        $(document).on('click', '.stock-delete', function () {
             var self = $(this);
             $.ajax({
                 type: 'POST',
@@ -104,8 +127,27 @@
                     alert(jqXHR.responseText);
                 }
             });
-
             return false;
+        });
+        $('select[name=route_hash]').change(function () {
+            var loading = $('<i class="icon16 loading"></i>');
+            $('#stock-table').hide();
+            $(this).after(loading);
+            $.ajax({
+                type: 'POST',
+                url: '?plugin=stock',
+                data: {
+                    route_hash: $(this).val()
+                },
+                dataType: 'html',
+                success: function (data, textStatus, jqXHR) {
+                    loading.remove();
+                    $('#stock-table').html($(data).find('#stock-table')).show();
+                },
+                error: function (jqXHR, errorText) {
+                    alert(jqXHR.responseText);
+                }
+            });
         });
     });
 </script>

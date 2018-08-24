@@ -3,14 +3,20 @@
 class shopStockPluginBackendAction extends waViewAction {
 
     public function execute() {
+        if (($route_hash = waRequest::post('route_hash', null, waRequest::TYPE_STRING)) != '') {
+            wa()->getStorage()->write('stock_plugin/route_hash', $route_hash);
+        }
+        $route_hash = wa()->getStorage()->read('stock_plugin/route_hash');
+
         $stock_model = new shopStockPluginModel();
-        $stocks = $stock_model->getAll();
+        $stocks = $stock_model->getStockByRouteHash($route_hash);
         $stocks = $this->prepareStocks($stocks);
-        $this->view->assign('stocks', $stocks);
-        $this->view->assign('frontend_url', wa()->getRouteUrl('shop/frontend'));
-        $app_settings_model = new waAppSettingsModel();
-        $page_url = $app_settings_model->get(shopStockPlugin::$plugin_id, 'page_url');
-        $this->view->assign('page_url', $page_url);
+        $this->view->assign(array(
+            'stocks' => $stocks,
+            'route_hashs' => shopStockHelper::getRouteHashs(),
+            'route_hash' => $route_hash,
+            'cron_str' => 'php ' . wa()->getConfig()->getRootPath() . '/cli.php shop StockPluginRun',
+        ));
     }
 
     private function prepareStocks(&$stocks) {

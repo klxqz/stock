@@ -1,6 +1,6 @@
 <?php
 
-class shopStockPluginBackendUploadController extends waJsonController {
+class shopStockPluginImageUploadController extends waJsonController {
 
     public function execute() {
         try {

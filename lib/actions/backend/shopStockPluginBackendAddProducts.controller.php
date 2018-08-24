@@ -16,15 +16,17 @@ class shopStockPluginBackendAddProductsController extends waJsonController {
             if (!$stock_model->getById($stock_id)) {
                 throw new Exception('Не верный идентификатор акции');
             }
-            $stock_products_model = new shopStockProductsPluginModel();
+            $stock_products_model = new shopStockPluginProductsModel();
+            $data = array();
             foreach ($product_id as $value) {
-                $data = array(
+                $data[] = array(
                     'stock_id' => $stock_id,
                     'type' => 'product',
                     'value' => $value,
                 );
-                $stock_products_model->insert($data);
             }
+            $stock_products_model->multiInsert($data);
+            $stock_products_model->updateStockProductJoin($stock_id);
             $this->response = 'Товары успешно добавлены';
         } catch (Exception $e) {
             $this->setError($e->getMessage());
