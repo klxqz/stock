@@ -17,9 +17,9 @@ class shopStockPluginModel extends waModel {
         parent::deleteById($id);
     }
 
-    public function getStockByRouteHash($route_hash = '0') {
+    public function getStockByRouteHash($route_hash = null) {
         $sql = "SELECT * FROM {$this->table}"
-                . ($route_hash != '0' ? " WHERE `id` IN (
+                . ($route_hash ? " WHERE `id` IN (
                         SELECT `stock_id` 
                         FROM `shop_stock_plugin_storefront` 
                         WHERE `route_hash`='" . $this->escape($route_hash) . "'
@@ -72,7 +72,7 @@ class shopStockPluginModel extends waModel {
                 `id` IN (
                         SELECT `stock_id` 
                         FROM `shop_stock_plugin_products_join` 
-                        WHERE `product_id`='" . $product_id . "'
+                        WHERE `product_id`='" . (int) $product_id . "'
                 )";
 
         $stock = $this->query($sql)->fetchAssoc();

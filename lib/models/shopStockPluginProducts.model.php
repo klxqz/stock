@@ -28,7 +28,7 @@ class shopStockPluginProductsModel extends waModel {
                     break;
                 case 'type':
                     $type_collection = new shopProductsCollection('type/' . $stock_product['value']);
-                    $products = $category_collection->getProducts('*', 0, 99999, true);
+                    $products = $type_collection->getProducts('*', 0, 99999, true);
                     if ($products) {
                         $this->updateByField($key, array('count' => count($products)));
                         $product_ids = array_merge($product_ids, array_keys($products));
