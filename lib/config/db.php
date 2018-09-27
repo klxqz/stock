@@ -13,7 +13,7 @@ return array(
         'restart' => array('tinyint', 1, 'null' => 0, 'default' => '0'),
         'begin_time' => array('time', 'null' => 0),
         'duration_time' => array('int', 11, 'null' => 0),
-        'restart_period' => array('text', 'null' => 0),
+        'restart_period' => array('text', 'null' => 0, 'default' => ''),
         'period_begin' => array('datetime', 'null' => 0),
         'period_end' => array('datetime', 'null' => 0),
         'period_runing' => array('tinyint', 1, 'null' => 0, 'default' => '0'),
