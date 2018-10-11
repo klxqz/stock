@@ -15,6 +15,8 @@ class shopStockPluginBackendSaveController extends waJsonController {
 
             if (!empty($stock['restart_period'])) {
                 $stock['restart_period'] = json_encode($stock['restart_period']);
+            } else {
+                $stock['restart_period'] = '';
             }
 
             if (!empty($stock['params'])) {
