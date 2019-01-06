@@ -33,6 +33,9 @@ class shopStockPlugin extends shopPlugin {
         ),
     );
 
+    /**
+     * @param array $settings
+     */
     public function saveSettings($settings = array()) {
         $route_hash = waRequest::post('route_hash');
         $route_settings = waRequest::post('route_settings');
