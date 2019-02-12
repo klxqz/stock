@@ -1,10 +1,12 @@
 <?php
 
-class shopStockPluginModel extends waModel {
+class shopStockPluginModel extends waModel
+{
 
     protected $table = 'shop_stock_plugin';
 
-    public function deleteById($id) {
+    public function deleteById($id)
+    {
         try {
             $stock_products_model = new shopStockPluginProductsModel();
             $stock_products_model->deleteByField('stock_id', $id);
@@ -12,14 +14,15 @@ class shopStockPluginModel extends waModel {
             $stock_storefront = new shopStockPluginStorefrontModel();
             $stock_storefront->deleteByField('stock_id', $id);
         } catch (Exception $e) {
-            
+
         }
         parent::deleteById($id);
     }
 
-    public function getStockByRouteHash($route_hash = null) {
+    public function getStockByRouteHash($route_hash = null)
+    {
         $sql = "SELECT * FROM {$this->table}"
-                . ($route_hash ? " WHERE `id` IN (
+            . ($route_hash ? " WHERE `id` IN (
                         SELECT `stock_id` 
                         FROM `shop_stock_plugin_storefront` 
                         WHERE `route_hash`='" . $this->escape($route_hash) . "'
@@ -28,12 +31,13 @@ class shopStockPluginModel extends waModel {
         return $this->query($sql)->fetchAll();
     }
 
-    public function getStockByProducts($product_ids) {
+    public function getStockByProducts($product_ids)
+    {
         $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
         $sql = "SELECT `s`.*, `j`.`product_id`
-                FROM {$this->table} as `s`
-                LEFT JOIN `shop_stock_plugin_products_join` as `j`
-                ON `s`.`id` = `j`.`stock_id` AND `j`.`product_id` IN ('" . implode("','", $product_ids) . "')
+                FROM `{$this->table}` as `s`
+                INNER JOIN `shop_stock_plugin_products_join` as `j`
+                ON `s`.`id` = `j`.`stock_id` AND `j`.`product_id` IN (" . implode(",", array_map('intval', $product_ids)) . ")
                 WHERE 
                 `s`.`datetime_begin` < '" . $now . "' AND
                 `s`.`datetime_end` > '" . $now . "' AND 
@@ -56,7 +60,8 @@ class shopStockPluginModel extends waModel {
         return $stocks;
     }
 
-    public function getStockByProductID($product_id) {
+    public function getStockByProductID($product_id)
+    {
         $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
         $sql = "SELECT * FROM {$this->table}
                 WHERE 
@@ -72,10 +77,13 @@ class shopStockPluginModel extends waModel {
                 `id` IN (
                         SELECT `stock_id` 
                         FROM `shop_stock_plugin_products_join` 
-                        WHERE `product_id`='" . (int) $product_id . "'
+                        WHERE `product_id`='" . (int)$product_id . "'
                 )";
 
         $stock = $this->query($sql)->fetchAssoc();
+        if (!$stock) {
+            return false;
+        }
         $stock['params'] = json_decode($stock['params'], true);
         if (shopStockHelper::getLastTime($stock) <= 0) {
             return false;
@@ -83,9 +91,10 @@ class shopStockPluginModel extends waModel {
         return $stock;
     }
 
-    public function getStockByCategoryID($category_id) {
+    public function getStockByCategoryID($category_id)
+    {
         $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
-        $sql = "SELECT * FROM {$this->table}
+        $sql = "SELECT * FROM `{$this->table}`
                 WHERE 
                 `datetime_begin` < '" . $now . "' AND
                 `datetime_end` > '" . $now . "' AND 
@@ -99,10 +108,13 @@ class shopStockPluginModel extends waModel {
                 `id` IN (
                         SELECT `stock_id` 
                         FROM `shop_stock_plugin_products` 
-                        WHERE `type` = 'category' AND `value` = '" . (int) $category_id . "'
+                        WHERE `type` = 'category' AND `value` = '" . (int)$category_id . "'
                 )";
 
         $stock = $this->query($sql)->fetchAssoc();
+        if (!$stock) {
+            return false;
+        }
         $stock['params'] = json_decode($stock['params'], true);
         if (shopStockHelper::getLastTime($stock) <= 0) {
             return false;
@@ -110,7 +122,8 @@ class shopStockPluginModel extends waModel {
         return $stock;
     }
 
-    public function getActiveStocks($sort = 'ASC') {
+    public function getActiveStocks($sort = 'ASC')
+    {
         if (strtoupper($sort) != 'ASC') {
             $sort = 'DESC';
         }
@@ -138,7 +151,8 @@ class shopStockPluginModel extends waModel {
         return $stocks;
     }
 
-    public function getActiveStockByUrl($url) {
+    public function getActiveStockByUrl($url)
+    {
         $now = waDateTime::date("Y-m-d H:i:s", null, wa()->getUser()->getTimezone());
         $sql = "SELECT * FROM {$this->table}
                 WHERE 

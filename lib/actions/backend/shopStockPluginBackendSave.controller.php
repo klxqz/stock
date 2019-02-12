@@ -1,8 +1,10 @@
 <?php
 
-class shopStockPluginBackendSaveController extends waJsonController {
+class shopStockPluginBackendSaveController extends waJsonController
+{
 
-    public function execute() {
+    public function execute()
+    {
         try {
             $stock = waRequest::post('stock');
 
@@ -31,8 +33,6 @@ class shopStockPluginBackendSaveController extends waJsonController {
 
             $stock_model = new shopStockPluginModel();
 
-            $stock_model->query("set sql_mode='STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'");
-
             if (!empty($stock['id'])) {
                 $stock_model->updateById($stock['id'], $stock);
             } else {
@@ -57,7 +57,6 @@ class shopStockPluginBackendSaveController extends waJsonController {
                 }
                 $stock_storefront->multiInsert($storefront);
             }
-
 
 
             $stock_products = waRequest::post('stock_products');
@@ -90,7 +89,8 @@ class shopStockPluginBackendSaveController extends waJsonController {
         }
     }
 
-    private function checkStockProducts($stock_id) {
+    private function checkStockProducts($stock_id)
+    {
         $stock_model = new shopStockPluginModel();
         $collection = new shopProductsCollection('stock/' . $stock_id);
         $check_products = $collection->getProducts('*', 0, 99999, true);
